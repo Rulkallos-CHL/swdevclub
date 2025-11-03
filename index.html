@@ -13,6 +13,9 @@
     <style>
         /* Import Google Font for Headings (Exo 2) - This helps make the fonts more stylish */
         @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;800&display=swap');
+        /* Import Inter for body text - Tailwind default */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
 
         /* Custom styles for the dark theme */
         :root {
@@ -32,24 +35,12 @@
             font-family: var(--font-title);
         }
 
-        /* --- Custom Font Size Adjustment: Reducing all text by 2px --- */
-        /* This requires overriding specific Tailwind utility classes using !important */
-        .text-6xl { /* Main title (60px -> 58px) */
-            font-size: 58px !important;
-        }
-        .text-4xl { /* Section titles (36px -> 34px) */
-            font-size: 34px !important;
-        }
-        .text-3xl { /* Card titles (30px -> 28px) */
-            font-size: 28px !important;
-        }
-        .text-lg, .nav-link { /* Body text, descriptions, nav links (18px -> 16px) */
-            font-size: 16px !important;
-        }
-        .text-base { /* Smallest utility text (e.g., date) (16px -> 14px) */
-            font-size: 14px !important;
-        }
         /* ----------------------------------------------------------- */
+        /* REMOVED custom font size overrides (text-6xl etc.) as they 
+           were non-responsive due to !important and causing mobile issues.
+           We now rely on Tailwind's responsive prefixes (e.g., text-4xl sm:text-6xl). 
+           ----------------------------------------------------------- */
+
 
         .content-card {
             background-color: #161b22; /* Slightly lighter dark for contrast */
@@ -62,7 +53,7 @@
         /* FIXES FOR NAVIGATION LINKS (BLOCK STYLE) */
         .nav-link {
             display: block; 
-            padding: 0.5rem 0.75rem;
+            padding: 0.5rem 0.5rem; /* Reduced padding for mobile compactness */
             border-radius: 0.5rem;
             color: #c9d1d9;
             background-color: transparent;
@@ -85,14 +76,14 @@
         }
         
         /* ---------------------------------------------------- */
-        /* NEW: Fixed Content Range (70vw centered = 15% to 85%) */
+        /* Fixed Content Range: Crucial for centering main content */
         .content-range {
             width: 70vw; 
             margin-left: auto;
             margin-right: auto;
         }
 
-        /* Fallback for smaller screens to ensure readability */
+        /* Fallback for smaller screens to ensure readability and full width */
         @media (max-width: 1023px) {
              .content-range {
                 width: 95vw; /* Use 95% of width on smaller screens */
@@ -100,16 +91,6 @@
         }
         /* ---------------------------------------------------- */
         
-        /* Responsive adjustments for large screens */
-        @media (min-width: 1024px) {
-            /* Removing custom max-w-7xl definition as it's no longer used for main content */
-        }
-        
-        /* Styling for the Modal Backdrop (to apply blur effect) */
-        /* #modal-backdrop {
-            /* Tailwind classes are used directly in the HTML element */
-        /* }
-
         /* Ensure modal image fits well within the viewport */
         #modal-image {
             max-width: 90vw;
@@ -122,28 +103,27 @@
 <body class="min-h-screen">
 
     <!-- Fixed Header Navigation Bar -->
-    <!-- Changed 'sticky' to 'fixed' and added w-full, ensuring it never moves relative to the viewport. -->
     <header class="fixed top-0 left-0 w-full z-50 bg-gray-900/90 backdrop-blur-md border-b border-gray-700">
         <!-- Applied content-range here to align the header content with the main body content range. -->
         <div class="content-range px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-            <!-- Club Icon and Logo/Club Name (Increased size here) -->
-            <div class="flex items-center space-x-3">
-                <!-- Club Icon: Changed from h-8 w-8 to h-10 w-10 -->
+            <!-- Club Icon and Logo/Club Name (Scaled down for mobile: text-xl, h-10 w-10) -->
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <!-- Club Icon: Default h-10 w-10, scales up to sm:h-12 sm:w-12 -->
                 <img 
                     src="https://rulkallos-chl.github.io/img/icon.png" 
                     alt="SPYC SwDev Club Logo" 
-                    class="h-14 w-14 rounded-full border border-violet-500"
+                    class="h-10 w-10 sm:h-12 sm:w-12 rounded-full border border-violet-500"
                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/C3A6FF/0d1117?text=S';"
                 >
-                <!-- Club Name: Changed from text-3xl to text-4xl -->
-                <h1 class="text-3xl font-bold text-white tracking-wider font-[var(--font-title)]">SPYC <span class="text-violet-400">SwDev</span> Club</h1>
+                <!-- Club Name: Default text-xl, scales up to sm:text-3xl -->
+                <h1 class="text-xl sm:text-3xl font-bold text-white tracking-wider font-[var(--font-title)]">SPYC <span class="text-violet-400">SwDev</span> Club</h1>
             </div>
 
-            <!-- Navigation Links (Size kept at text-lg) -->
+            <!-- Navigation Links (Reduced font size to text-sm on mobile) -->
             <nav class="flex space-x-1 sm:space-x-3">
-                <a href="#main" id="nav-main" class="nav-link text-lg font-semibold text-gray-400">Home</a>
-                <a href="#updates" id="nav-updates" class="nav-link text-lg font-semibold text-gray-400">Updates</a>
-                <a href="#portal" id="nav-portal" class="nav-link text-lg font-semibold text-gray-400">Portal</a>
+                <a href="#main" id="nav-main" class="nav-link text-sm sm:text-lg font-semibold text-gray-400">Home</a>
+                <a href="#updates" id="nav-updates" class="nav-link text-sm sm:text-lg font-semibold text-gray-400">Updates</a>
+                <a href="#portal" id="nav-portal" class="nav-link text-sm sm:text-lg font-semibold text-gray-400">Portal</a>
             </nav>
         </div>
     </header>
@@ -183,12 +163,12 @@
         const viewContainer = document.getElementById('view-container');
         const navLinks = document.querySelectorAll('.nav-link');
 
-        // Utility function to generate content list items (Replaces generateSlide)
-        function generateListItem(title, description, imageUrl, fontTitleClass, fontDescClass) {
-            // Added onclick event to the image to launch the modal
+        // Utility function to generate content list items (Project Cards)
+        function generateListItem(title, description, imageUrl) {
+            // Apply responsive classes directly in the template
             return `
                 <div class="flex flex-col lg:flex-row items-start content-card mb-6 p-6">
-                    <!-- Image is now clickable and scales slightly on hover -->
+                    <!-- Image remains w-full on mobile, fixed size on large screens -->
                     <img 
                         src="${imageUrl}" 
                         onerror="this.onerror=null;this.src='https://placehold.co/600x400/3d3d3d/ffffff?text=Image+Missing'" 
@@ -197,82 +177,91 @@
                         onclick="showImageModal('${imageUrl}', '${title}')"
                     >
                     <div>
-                        <!-- ACCENT COLOR: Lilac/Violet -->
-                        <h3 class="${fontTitleClass} font-semibold text-violet-400 mb-2">${title}</h3>
-                        <p class="${fontDescClass} text-gray-300">${description}</p>
+                        <!-- Responsive Title: text-2xl on mobile, text-3xl on sm/desktop -->
+                        <h3 class="text-2xl sm:text-3xl font-semibold text-violet-400 mb-2">${title}</h3>
+                        <!-- Responsive Description: text-base on mobile, text-lg on sm/desktop -->
+                        <p class="text-base sm:text-lg text-gray-300">${description}</p>
                     </div>
                 </div>
             `;
         }
 
-        // Utility function to generate update list items (Replaces generateUpdate)
-        function generateUpdateItem(title, description, date, type, fontTitleClass, fontTypeClass, fontDateClass, fontDescClass) {
-            // Keeping standard color indicators for status (Green for Event, Red for Policy)
+        // Utility function to generate update list items
+        function generateUpdateItem(title, description, date, type) {
             let typeColor = type === 'Policy' ? 'bg-red-500' : type === 'Event' ? 'bg-green-500' : 'bg-yellow-500';
             return `
                 <div class="content-card mb-6 p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="${fontTitleClass} font-semibold text-white">${title}</h3>
-                        <span class="${fontDateClass} text-gray-500 whitespace-nowrap">${date}</span>
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+                        <!-- Responsive Title: text-2xl on mobile, text-3xl on sm/desktop -->
+                        <h3 class="text-2xl sm:text-3xl font-semibold text-white mb-2 sm:mb-0">${title}</h3>
+                        <!-- Responsive Date: text-sm on mobile, text-base on sm/desktop -->
+                        <span class="text-sm sm:text-base text-gray-500 whitespace-nowrap">${date}</span>
                     </div>
                     <div class="flex items-start space-x-4">
-                        <span class="${fontTypeClass} font-medium ${typeColor} text-white px-3 py-1 rounded-full whitespace-nowrap">${type}</span>
-                        <p class="${fontDescClass} text-gray-300">${description}</p>
+                        <!-- Responsive Type Tag: text-sm on mobile, text-lg on sm/desktop -->
+                        <span class="text-sm sm:text-lg font-medium ${typeColor} text-white px-3 py-1 rounded-full whitespace-nowrap">${type}</span>
+                        <!-- Responsive Description: text-base on mobile, text-lg on sm/desktop -->
+                        <p class="text-base sm:text-lg text-gray-300">${description}</p>
                     </div>
                 </div>
             `;
         }
         
-        // Utility function to generate tool cards for the Portal - Icons updated for better look
+        // Utility function to generate tool cards for the Portal
         function generateToolCard(title, description, url, iconPath, iconDesc) {
-            // Using detailed Lucide SVG paths for a more refined look
             return `
                 <a href="${url}" target="_blank" class="block content-card hover:bg-gray-800 transition duration-200">
                     <div class="flex items-center space-x-4 mb-3">
-                        <!-- ACCENT COLOR: Lilac/Violet for background and icon -->
-                        <div class="p-4 bg-violet-500/20 text-violet-400 rounded-full border border-violet-500/30 shadow-lg shadow-violet-900/50">
-                            <!-- Better looking icon with stroke properties -->
-                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8">
+                        <div class="p-3 sm:p-4 bg-violet-500/20 text-violet-400 rounded-full border border-violet-500/30 shadow-lg shadow-violet-900/50">
+                            <!-- Responsive Icon Size -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 sm:w-8 sm:h-8">
                                 <title>${iconDesc}</title>
                                 <path d="${iconPath}"></path>
                             </svg>
                         </div>
-                        <h3 class="text-3xl font-semibold text-white">${title}</h3>
+                        <!-- Responsive Title: text-2xl on mobile, text-3xl on sm/desktop -->
+                        <h3 class="text-2xl sm:text-3xl font-semibold text-white">${title}</h3>
                     </div>
-                    <p class="text-gray-300 text-lg">${description}</p>
-                    <!-- ACCENT COLOR: Lilac/Violet for link text -->
-                    <span class="mt-2 inline-block text-violet-400 hover:text-violet-300 text-lg font-medium">Launch Tool &rarr;</span>
+                    <!-- Responsive Description: text-base on mobile, text-lg on sm/desktop -->
+                    <p class="text-base sm:text-lg text-gray-300">${description}</p>
+                    <!-- Responsive Link Text -->
+                    <span class="mt-2 inline-block text-violet-400 hover:text-violet-300 text-base sm:text-lg font-medium">Launch Tool &rarr;</span>
                 </a>
             `;
         }
 
 
-        // Updated views with list structures and increased font sizes
+        // Updated views data
         const views = {
             main: {
                 title: "Welcome to the Software Development Club!",
                 content: `
                     <div class="content-card mb-8">
-                        <h2 class="text-4xl font-extrabold text-white mb-4">Our Introduction </h2>
+                        <!-- Responsive H2 -->
+                        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Our Introduction </h2>
                         <hr class="hidden" style="height:30px">
-                        <p class="text-lg text-gray-300 leading-relaxed">
+                        <!-- Responsive Paragraph -->
+                        <p class="text-base sm:text-lg text-gray-300 leading-relaxed">
                             The SPYC Software Development Club (SwDev) is the premier community for students passionate about coding, design, and building real-world applications. We focus on hands-on experience, collaborative projects, and mentorship, preparing members for successful careers in tech. Join us to transform ideas into digital reality!
                         </p>
                     </div>
                     
                     <div class="content-card mb-8">
-                        <h2 class="text-4xl font-extrabold text-white mb-4">Publish Your Website! </h2>
+                        <!-- Responsive H2 -->
+                        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">Publish Your Website! </h2>
                         <hr class="hidden" style="height:30px">
-                        <p class="text-lg text-gray-300 leading-relaxed">
+                        <!-- Responsive Paragraph -->
+                        <p class="text-base sm:text-lg text-gray-300 leading-relaxed">
                             If you want to host, or to test your own website via us, feel free to contact us by PYCNet (please add reciever as itp(IT Prefects) or pyc21030(5D Chung Ho Long). You could also use Github, Netlify or Vercel as well. Free tools are always online!)
                         </p>
                     </div>
 
                     <div class="mt-8">
-                        <h2 class="text-4xl font-extrabold text-white mb-6">Projects and Acheivements</h2>
-                        ${generateListItem('AI Hackathon 2025 Silver Award', 'Our school team won silver award in the competition.', 'https://rulkallos-chl.github.io/img/hackathon25.png', 'text-3xl', 'text-lg')}
-                        ${generateListItem('CUHKCTF 2025 Awards', 'Our school teams won 6th and 9th place in the competition', 'https://rulkallos-chl.github.io/img/cuhkctf25ranking.png', 'text-3xl', 'text-lg')}
-                        ${generateListItem('updating . . .', 'updating . . .', 'https://placehold.co/600x400/3d3d3d/ffffff?text=updating+.+.+.', 'text-3xl', 'text-lg')}
+                        <!-- Responsive H2 -->
+                        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-6">Projects and Acheivements</h2>
+                        ${generateListItem('AI Hackathon 2025 Silver Award', 'Our school team won silver award in the competition.', 'https://rulkallos-chl.github.io/img/hackathon25.png')}
+                        ${generateListItem('CUHKCTF 2025 Awards', 'Our school teams won 6th and 9th place in the competition', 'https://rulkallos-chl.github.io/img/cuhkctf25ranking.png')}
+                        ${generateListItem('updating . . .', 'updating . . .', 'https://placehold.co/600x400/3d3d3d/ffffff?text=updating+.+.+.')}
                     </div>
                 `
             },
@@ -280,10 +269,10 @@
                 title: "Updates & Policy Changes",
                 content: `
                     <div class="mt-8">
-                        <h2 class="text-4xl font-extrabold text-white mb-6">Upcoming Events & News</h2>
-                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #1', 'This is the first day of our three-day course, focusing on teaching attendees how to make their own tomato clock app with the help of AI, from scratch! 5D Hugo Fung and 5D Carson Leung will be the hosts.', '28 Nov 2025', 'Event', 'text-3xl', 'text-lg', 'text-base', 'text-lg')}
-                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #2', 'This is the second day of our three-day course, focusing on letting attendees to brainstorm whatever they want, into their web app! 5D Isaac Chung will be the host.', '5 Dec 2025', 'Event', 'text-3xl', 'text-lg', 'text-base', 'text-lg')}
-                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #3', 'This is the last day of our three-day course, focusing on instruct attendees to make their own "Homework Checklist" web app. Mr. Ken Leung will be the host.', '10 Dec 2025', 'Event', 'text-3xl', 'text-lg', 'text-base', 'text-lg')}
+                        <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-6">Upcoming Events & News</h2>
+                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #1', 'This is the first day of our three-day course, focusing on teaching attendees how to make their own tomato clock app with the help of AI, from scratch! 5D Hugo Fung and 5D Carson Leung will be the hosts.', '28 Nov 2025', 'Event')}
+                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #2', 'This is the second day of our three-day course, focusing on letting attendees to brainstorm whatever they want, into their web app! 5D Isaac Chung will be the host.', '5 Dec 2025', 'Event')}
+                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #3', 'This is the last day of our three-day course, focusing on instruct attendees to make their own "Homework Checklist" web app. Mr. Ken Leung will be the host.', '10 Dec 2025', 'Event')}
 
 
                     </div>
@@ -292,7 +281,7 @@
             portal: {
                 title: "In-House Developer Tools Portal",
                 content: `
-                    <!-- The grid layout remains at max 2 columns per row, which was fixed in the previous iteration -->
+                    <!-- The grid layout is mobile-friendly (1 column) and scales to 2 columns on medium screens and up -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                         <!-- 1. Countdown Timer (Icon: Clock) -->
                         ${generateToolCard('Countdown Timer', 'A versatile timer tool to track deadlines, events, or focus sessions with precision.', 'https://aero.pyc.edu.hk/~itp/countdown/', 'M12 2v4M17.65 6.35l-2.12 2.12M22 12h-4M17.65 17.65l-2.12-2.12M12 22v-4M6.35 17.65l2.12-2.12M2 12h4M6.35 6.35l2.12 2.12M12 12A10 10 0 1 0 12 2A10 10 0 0 0 12 12ZM12 7V12H15', 'Clock Timer Icon')}
@@ -380,9 +369,9 @@
             if (view) {
                 viewContainer.innerHTML = `
                     <div class="mb-8">
-                        <!-- ACCENT COLOR: Lilac/Violet for main title -->
-                        <h1 class="text-6xl font-extrabold text-violet-400 mb-2">${view.title}</h1>
-                        <hr class="border-t-2 border-gray-700 w-1/4 mb-6" />
+                        <!-- RESPONSIVE MAIN TITLE: text-4xl on mobile, text-6xl on small screens and up -->
+                        <h1 class="text-4xl sm:text-6xl font-extrabold text-violet-400 mb-2">${view.title}</h1>
+                        <hr class="border-t-2 border-gray-700 w-full sm:w-1/4 mb-6" />
                     </div>
                     ${view.content}
                 `;
@@ -411,10 +400,6 @@
             updateView(initialHash);
         });
     </script>
-    <h3 style="color:#ffffff; text-align:center">2025-2026 5D Chung Ho Long, 5D Fung Sze Chun</h3>
+    <h3 class="text-xs sm:text-base" style="color:#ffffff; text-align:center; padding: 1rem 0;">2025-2026 5D Chung Ho Long, 5D Fung Sze Chun</h3>
 </body>
 </html>
-
-
-
-
