@@ -29,6 +29,25 @@
             font-family: var(--font-title);
         }
 
+        /* --- Custom Font Size Adjustment: Reducing all text by 2px --- */
+        /* This requires overriding specific Tailwind utility classes using !important */
+        .text-6xl { /* Main title (60px -> 58px) */
+            font-size: 58px !important;
+        }
+        .text-4xl { /* Section titles (36px -> 34px) */
+            font-size: 34px !important;
+        }
+        .text-3xl { /* Card titles (30px -> 28px) */
+            font-size: 28px !important;
+        }
+        .text-lg, .nav-link { /* Body text, descriptions, nav links (18px -> 16px) */
+            font-size: 16px !important;
+        }
+        .text-base { /* Smallest utility text (e.g., date) (16px -> 14px) */
+            font-size: 14px !important;
+        }
+        /* ----------------------------------------------------------- */
+
         .content-card {
             background-color: #161b22; /* Slightly lighter dark for contrast */
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
@@ -84,9 +103,9 @@
         }
         
         /* Styling for the Modal Backdrop (to apply blur effect) */
-        #modal-backdrop {
+        /* #modal-backdrop {
             /* Tailwind classes are used directly in the HTML element */
-        }
+        /* }
 
         /* Ensure modal image fits well within the viewport */
         #modal-image {
@@ -98,26 +117,28 @@
 <body class="min-h-screen">
 
     <!-- Fixed Header Navigation Bar -->
-    <!-- The header is fixed, ensuring it stays on top and is not affected by main content scrolling. -->
-    <header class="sticky top-0 z-50 bg-gray-900/90 backdrop-blur-md border-b border-gray-700">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-            <!-- Club Icon and Logo/Club Name -->
+    <!-- Changed 'sticky' to 'fixed' and added w-full, ensuring it never moves relative to the viewport. -->
+    <header class="fixed top-0 left-0 w-full z-50 bg-gray-900/90 backdrop-blur-md border-b border-gray-700">
+        <!-- Applied content-range here to align the header content with the main body content range. -->
+        <div class="content-range px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+            <!-- Club Icon and Logo/Club Name (Increased size here) -->
             <div class="flex items-center space-x-3">
-                <!-- Club Icon (Placeholder logic is used since external asset loading is restricted to one file) -->
+                <!-- Club Icon: Changed from h-8 w-8 to h-10 w-10 -->
                 <img 
-                    src="/icon.png" 
+                    src="icon.png" 
                     alt="SPYC SwDev Club Logo" 
-                    class="h-8 w-8 rounded-full border border-violet-500"
+                    class="h-14 w-14 rounded-full border border-violet-500"
                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/C3A6FF/0d1117?text=S';"
                 >
+                <!-- Club Name: Changed from text-3xl to text-4xl -->
                 <h1 class="text-3xl font-bold text-white tracking-wider font-[var(--font-title)]">SPYC <span class="text-violet-400">SwDev</span> Club</h1>
             </div>
 
-            <!-- Navigation Links -->
-            <nav class="flex space-x-2 sm:space-x-4">
-                <a href="#main" id="nav-main" class="nav-link text-lg font-medium text-gray-400">Main Web</a>
-                <a href="#updates" id="nav-updates" class="nav-link text-lg font-medium text-gray-400">Updates</a>
-                <a href="#portal" id="nav-portal" class="nav-link text-lg font-medium text-gray-400">Portal</a>
+            <!-- Navigation Links (Size kept at text-lg) -->
+            <nav class="flex space-x-1 sm:space-x-3">
+                <a href="#main" id="nav-main" class="nav-link text-lg font-semibold text-gray-400">Home</a>
+                <a href="#updates" id="nav-updates" class="nav-link text-lg font-semibold text-gray-400">Updates</a>
+                <a href="#portal" id="nav-portal" class="nav-link text-lg font-semibold text-gray-400">Portal</a>
             </nav>
         </div>
     </header>
@@ -151,7 +172,6 @@
             </button>
         </div>
     </div>
-
 
     <!-- JavaScript for Routing, Navigation, Content Generation, and Modal -->
     <script>
@@ -229,16 +249,25 @@
                 content: `
                     <div class="content-card mb-8">
                         <h2 class="text-4xl font-extrabold text-white mb-4">Our Introduction </h2>
+                        <hr class="hidden" style="height:30px">
                         <p class="text-lg text-gray-300 leading-relaxed">
                             The SPYC Software Development Club (SwDev) is the premier community for students passionate about coding, design, and building real-world applications. We focus on hands-on experience, collaborative projects, and mentorship, preparing members for successful careers in tech. Join us to transform ideas into digital reality!
+                        </p>
+                    </div>
+                    
+                    <div class="content-card mb-8">
+                        <h2 class="text-4xl font-extrabold text-white mb-4">Publish Your Website! </h2>
+                        <hr class="hidden" style="height:30px">
+                        <p class="text-lg text-gray-300 leading-relaxed">
+                            If you want to host, or to test your own website via us, feel free to contact us by PYCNet (please add reciever as itp(IT Prefects) or pyc21030(5D Chung Ho Long). You could also use Github, Netlify or Vercel as well. Free tools are always online!)
                         </p>
                     </div>
 
                     <div class="mt-8">
                         <h2 class="text-4xl font-extrabold text-white mb-6">Projects and Acheivements</h2>
                         ${generateListItem('AI Hackathon 2025 Silver Award', 'Our school team won silver award in the competition.', 'hackathon25.png', 'text-3xl', 'text-lg')}
-                        ${generateListItem('404', 'error', 'https://placehold.co/600x400/3d3d3d/ffffff?text=404', 'text-3xl', 'text-lg')}
-                        ${generateListItem('404', 'error', 'https://placehold.co/600x400/3d3d3d/ffffff?text=404', 'text-3xl', 'text-lg')}
+                        ${generateListItem('CUHKCTF 2025 Awards', 'Our school teams won 6th and 9th place in the competition', 'cuhkctf25ranking.png', 'text-3xl', 'text-lg')}
+                        ${generateListItem('updating . . .', 'updating . . .', 'https://placehold.co/600x400/3d3d3d/ffffff?text=updating+.+.+.', 'text-3xl', 'text-lg')}
                     </div>
                 `
             },
@@ -247,8 +276,10 @@
                 content: `
                     <div class="mt-8">
                         <h2 class="text-4xl font-extrabold text-white mb-6">Upcoming Events & News</h2>
-                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #1', 'This is the first day of our two-day course, focusing on teaching attendees how to make their own tomato clock app with the help of AI, from scratch! 5D Hugo Fung and 5D Carson Leung will be the hosts.', '28 Nov 2025', 'Event', 'text-3xl', 'text-lg', 'text-base', 'text-lg')}
-                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #2', 'This is the second day of our two-day course, focusing on letting attendees to brainstorm whatever they want, into their web app! 5D Isaac Chung will be the host.', 'Early in Dec 2025', 'Event', 'text-3xl', 'text-lg', 'text-base', 'text-lg')}
+                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #1', 'This is the first day of our three-day course, focusing on teaching attendees how to make their own tomato clock app with the help of AI, from scratch! 5D Hugo Fung and 5D Carson Leung will be the hosts.', '28 Nov 2025', 'Event', 'text-3xl', 'text-lg', 'text-base', 'text-lg')}
+                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #2', 'This is the second day of our three-day course, focusing on letting attendees to brainstorm whatever they want, into their web app! 5D Isaac Chung will be the host.', '5 Dec 2025', 'Event', 'text-3xl', 'text-lg', 'text-base', 'text-lg')}
+                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #3', 'This is the last day of our three-day course, focusing on instruct attendees to make their own "Homework Checklist" web app. Mr. Ken Leung will be the host.', '10 Dec 2025', 'Event', 'text-3xl', 'text-lg', 'text-base', 'text-lg')}
+
 
                     </div>
                 `
@@ -256,8 +287,8 @@
             portal: {
                 title: "In-House Developer Tools Portal",
                 content: `
-                    <!-- Updated grid to fit up to 3 columns on large screens for 5 items -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- The grid layout remains at max 2 columns per row, which was fixed in the previous iteration -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                         <!-- 1. Countdown Timer (Icon: Clock) -->
                         ${generateToolCard('Countdown Timer', 'A versatile timer tool to track deadlines, events, or focus sessions with precision.', 'https://aero.pyc.edu.hk/~itp/countdown/', 'M12 2v4M17.65 6.35l-2.12 2.12M22 12h-4M17.65 17.65l-2.12-2.12M12 22v-4M6.35 17.65l2.12-2.12M2 12h4M6.35 6.35l2.12 2.12M12 12A10 10 0 1 0 12 2A10 10 0 0 0 12 12ZM12 7V12H15', 'Clock Timer Icon')}
                         
