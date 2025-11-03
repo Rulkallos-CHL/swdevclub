@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPYC Software Development Club (SwDev)</title>
+    
+    <!-- Load Tailwind and define the stylish font stack -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Import Google Font for Headings (Exo 2) - This helps make the fonts more stylish */
+        @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;800&display=swap');
+
+        /* Custom styles for the dark theme */
+        :root {
+            scroll-behavior: smooth;
+            /* Define a stylish font family for titles */
+            --font-title: 'Exo 2', sans-serif;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif; /* Keep Inter for body text */
+            background-color: #0d1117; /* GitHub Dark BG (Black) */
+            color: #c9d1d9; /* Light text */
+        }
+
+        /* Apply the new font to all major headers for a stylish look */
+        h1, h2, h3 {
+            font-family: var(--font-title);
+        }
+
+        .content-card {
+            background-color: #161b22; /* Slightly lighter dark for contrast */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+        }
+
+        /* FIXES FOR NAVIGATION LINKS (BLOCK STYLE) */
+        .nav-link {
+            display: block; 
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            color: #c9d1d9;
+            background-color: transparent;
+            border: 1px solid transparent;
+            transition: color 0.2s, background-color 0.2s, border 0.2s;
+        }
+        
+        /* Hover State: Subtle lift and accent text color */
+        .nav-link:hover {
+            color: #C3A6FF; /* Lilac/Violet Accent */
+            background-color: #1f2733;
+            border: 1px solid #30363d;
+        }
+        
+        /* Active State: Full accent color block */
+        .nav-link.active {
+            color: #ffffff;
+            background-color: #C3A6FF; /* PRIMARY ACCENT COLOR: Lilac/Violet */
+            border: 1px solid #C3A6FF;
+        }
+        
+        /* ---------------------------------------------------- */
+        /* NEW: Fixed Content Range (70vw centered = 15% to 85%) */
+        .content-range {
+            width: 70vw; 
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Fallback for smaller screens to ensure readability */
+        @media (max-width: 1023px) {
+             .content-range {
+                width: 95vw; /* Use 95% of width on smaller screens */
+            }
+        }
+        /* ---------------------------------------------------- */
+        
+        /* Responsive adjustments for large screens */
+        @media (min-width: 1024px) {
+            /* Removing custom max-w-7xl definition as it's no longer used for main content */
+        }
+        
+        /* Styling for the Modal Backdrop (to apply blur effect) */
+        #modal-backdrop {
+            /* Tailwind classes are used directly in the HTML element */
+        }
+
+        /* Ensure modal image fits well within the viewport */
+        #modal-image {
+            max-width: 90vw;
+            max-height: 90vh;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Fixed Header Navigation Bar -->
+    <!-- The header is fixed, ensuring it stays on top and is not affected by main content scrolling. -->
+    <header class="sticky top-0 z-50 bg-gray-900/90 backdrop-blur-md border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+            <!-- Club Icon and Logo/Club Name -->
+            <div class="flex items-center space-x-3">
+                <!-- Club Icon (Placeholder logic is used since external asset loading is restricted to one file) -->
+                <img 
+                    src="/icon.png" 
+                    alt="SPYC SwDev Club Logo" 
+                    class="h-8 w-8 rounded-full border border-violet-500"
+                    onerror="this.onerror=null; this.src='https://placehold.co/40x40/C3A6FF/0d1117?text=S';"
+                >
+                <h1 class="text-3xl font-bold text-white tracking-wider font-[var(--font-title)]">SPYC <span class="text-violet-400">SwDev</span> Club</h1>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex space-x-2 sm:space-x-4">
+                <a href="#main" id="nav-main" class="nav-link text-lg font-medium text-gray-400">Main Web</a>
+                <a href="#updates" id="nav-updates" class="nav-link text-lg font-medium text-gray-400">Updates</a>
+                <a href="#portal" id="nav-portal" class="nav-link text-lg font-medium text-gray-400">Portal</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <!-- Applying .content-range for 70vw fixed range and mt-16 to clear the fixed header. -->
+    <main class="content-range p-4 sm:p-6 lg:p-8 mt-16">
+        
+        <!-- View Container -->
+        <div id="view-container">
+            <!-- Content for each view will be rendered here based on hash -->
+        </div>
+
+    </main>
+    
+    <!-- Image Modal Structure (Hidden by default) -->
+    <div id="image-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 transition-opacity duration-300 opacity-0">
+        <!-- Blurred Backdrop - Clicking this hides the modal -->
+        <div id="modal-backdrop" class="absolute inset-0 bg-gray-900/90 backdrop-blur-md cursor-zoom-out"></div>
+        
+        <!-- Image Container with Transition -->
+        <div id="modal-content" class="relative max-w-4xl max-h-full overflow-hidden transition-transform duration-300 scale-95">
+            <img id="modal-image" src="" alt="Zoomed View" class="rounded-xl shadow-2xl max-w-full max-h-[90vh] object-contain cursor-zoom-out">
+            <!-- Close Button -->
+            <button id="modal-close" class="absolute top-4 right-4 text-white bg-black/50 hover:bg-black/70 rounded-full p-2 transition-colors z-10">
+                <!-- Close Icon (X) -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- JavaScript for Routing, Navigation, Content Generation, and Modal -->
+    <script>
+        const viewContainer = document.getElementById('view-container');
+        const navLinks = document.querySelectorAll('.nav-link');
+
+        // Utility function to generate content list items (Replaces generateSlide)
+        function generateListItem(title, description, imageUrl, fontTitleClass, fontDescClass) {
+            // Added onclick event to the image to launch the modal
+            return `
+                <div class="flex flex-col lg:flex-row items-start content-card mb-6 p-6">
+                    <!-- Image is now clickable and scales slightly on hover -->
+                    <img 
+                        src="${imageUrl}" 
+                        onerror="this.onerror=null;this.src='https://placehold.co/600x400/3d3d3d/ffffff?text=Image+Missing'" 
+                        alt="${title}" 
+                        class="rounded-lg object-cover w-full lg:w-64 h-40 lg:h-48 mb-4 lg:mb-0 lg:mr-6 border border-violet-500/30 cursor-pointer transition duration-300 hover:scale-[1.02]"
+                        onclick="showImageModal('${imageUrl}', '${title}')"
+                    >
+                    <div>
+                        <!-- ACCENT COLOR: Lilac/Violet -->
+                        <h3 class="${fontTitleClass} font-semibold text-violet-400 mb-2">${title}</h3>
+                        <p class="${fontDescClass} text-gray-300">${description}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Utility function to generate update list items (Replaces generateUpdate)
+        function generateUpdateItem(title, description, date, type, fontTitleClass, fontTypeClass, fontDateClass, fontDescClass) {
+            // Keeping standard color indicators for status (Green for Event, Red for Policy)
+            let typeColor = type === 'Policy' ? 'bg-red-500' : type === 'Event' ? 'bg-green-500' : 'bg-yellow-500';
+            return `
+                <div class="content-card mb-6 p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="${fontTitleClass} font-semibold text-white">${title}</h3>
+                        <span class="${fontDateClass} text-gray-500 whitespace-nowrap">${date}</span>
+                    </div>
+                    <div class="flex items-start space-x-4">
+                        <span class="${fontTypeClass} font-medium ${typeColor} text-white px-3 py-1 rounded-full whitespace-nowrap">${type}</span>
+                        <p class="${fontDescClass} text-gray-300">${description}</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Utility function to generate tool cards for the Portal - Icons updated for better look
+        function generateToolCard(title, description, url, iconPath, iconDesc) {
+            // Using detailed Lucide SVG paths for a more refined look
+            return `
+                <a href="${url}" target="_blank" class="block content-card hover:bg-gray-800 transition duration-200">
+                    <div class="flex items-center space-x-4 mb-3">
+                        <!-- ACCENT COLOR: Lilac/Violet for background and icon -->
+                        <div class="p-4 bg-violet-500/20 text-violet-400 rounded-full border border-violet-500/30 shadow-lg shadow-violet-900/50">
+                            <!-- Better looking icon with stroke properties -->
+                            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-8 h-8">
+                                <title>${iconDesc}</title>
+                                <path d="${iconPath}"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-3xl font-semibold text-white">${title}</h3>
+                    </div>
+                    <p class="text-gray-300 text-lg">${description}</p>
+                    <!-- ACCENT COLOR: Lilac/Violet for link text -->
+                    <span class="mt-2 inline-block text-violet-400 hover:text-violet-300 text-lg font-medium">Launch Tool &rarr;</span>
+                </a>
+            `;
+        }
+
+
+        // Updated views with list structures and increased font sizes
+        const views = {
+            main: {
+                title: "Welcome to the Software Development Club!",
+                content: `
+                    <div class="content-card mb-8">
+                        <h2 class="text-4xl font-extrabold text-white mb-4">Our Introduction </h2>
+                        <p class="text-lg text-gray-300 leading-relaxed">
+                            The SPYC Software Development Club (SwDev) is the premier community for students passionate about coding, design, and building real-world applications. We focus on hands-on experience, collaborative projects, and mentorship, preparing members for successful careers in tech. Join us to transform ideas into digital reality!
+                        </p>
+                    </div>
+
+                    <div class="mt-8">
+                        <h2 class="text-4xl font-extrabold text-white mb-6">Projects and Acheivements</h2>
+                        ${generateListItem('AI Hackathon 2025 Silver Award', 'Our school team won silver award in the competition.', 'hackathon25.png', 'text-3xl', 'text-lg')}
+                        ${generateListItem('404', 'error', 'https://placehold.co/600x400/3d3d3d/ffffff?text=404', 'text-3xl', 'text-lg')}
+                        ${generateListItem('404', 'error', 'https://placehold.co/600x400/3d3d3d/ffffff?text=404', 'text-3xl', 'text-lg')}
+                    </div>
+                `
+            },
+            updates: {
+                title: "Updates & Policy Changes",
+                content: `
+                    <div class="mt-8">
+                        <h2 class="text-4xl font-extrabold text-white mb-6">Upcoming Events & News</h2>
+                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #1', 'This is the first day of our two-day course, focusing on teaching attendees how to make their own tomato clock app with the help of AI, from scratch! 5D Hugo Fung and 5D Carson Leung will be the hosts.', '28 Nov 2025', 'Event', 'text-3xl', 'text-lg', 'text-base', 'text-lg')}
+                        ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #2', 'This is the second day of our two-day course, focusing on letting attendees to brainstorm whatever they want, into their web app! 5D Isaac Chung will be the host.', 'Early in Dec 2025', 'Event', 'text-3xl', 'text-lg', 'text-base', 'text-lg')}
+
+                    </div>
+                `
+            },
+            portal: {
+                title: "In-House Developer Tools Portal",
+                content: `
+                    <!-- Updated grid to fit up to 3 columns on large screens for 5 items -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- 1. Countdown Timer (Icon: Clock) -->
+                        ${generateToolCard('Countdown Timer', 'A versatile timer tool to track deadlines, events, or focus sessions with precision.', 'https://aero.pyc.edu.hk/~itp/countdown/', 'M12 2v4M17.65 6.35l-2.12 2.12M22 12h-4M17.65 17.65l-2.12-2.12M12 22v-4M6.35 17.65l2.12-2.12M2 12h4M6.35 6.35l2.12 2.12M12 12A10 10 0 1 0 12 2A10 10 0 0 0 12 12ZM12 7V12H15', 'Clock Timer Icon')}
+                        
+                        <!-- 2. Cue Card Generator (Icon: Book/Cards) -->
+                        ${generateToolCard('Cue Card Generator', 'Quickly create and customize digital cue cards for studying, presentations, or quick reference.', 'https://aero.pyc.edu.hk/~itp/cue_card_maker/', 'M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM12 7h10v12a3 3 0 0 1-3 3h-7', 'Cue Card Icon')}
+                        
+                        <!-- 3. QR Code Generator (Icon: Qr Code) -->
+                        ${generateToolCard('QR Code Generator', 'Instantly convert any URL or text into a scannable QR code for easy sharing and distribution.', 'https://www5.pyc.edu.hk/pycnet/it_in_education/qr_code_gen.php', 'M3 3h8v8H3zM15 3h6v6h-6zM3 15h8v6H3zM15 15h6v6h-6zM8 8h1M19 5h1M5 19h1M17 17h1M17 19h1M19 19h1M15 5h1M19 7h1M5 5h1M5 7h1M7 5h1', 'QR Code Icon')}
+                        
+                        <!-- 4. Seating Plan Arranger (Icon: Layout Grid) -->
+                        ${generateToolCard('Seating Plan Arranger', 'Tool for generating and visualizing optimal seating arrangements for classrooms or events.', 'https://aero.pyc.edu.hk/~itp/seating_plan/', 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', 'Seating Plan Icon')}
+                        
+                        <!-- 5. Crowdscontrol (testing) (Icon: Users) -->
+                        ${generateToolCard('Crowdscontrol (testing)', 'Internal testing platform for managing and simulating crowd dynamics and flow control.', 'https://aero.pyc.edu.hk/~itp/crowdscontrol/', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7A4 4 0 0 1 9 15M17 7A4 4 0 0 1 17 15', 'Crowd Control Icon')}
+                    </div>
+                `
+            }
+        };
+
+        // --- Image Modal Logic ---
+        const imageModal = document.getElementById('image-modal');
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const modalContent = document.getElementById('modal-content');
+        const modalImage = document.getElementById('modal-image');
+        const modalClose = document.getElementById('modal-close');
+
+        // Function to show the modal with the specified image
+        function showImageModal(imageUrl, title) {
+            modalImage.src = imageUrl;
+            modalImage.alt = title + " - Zoomed View";
+            
+            // 1. Make the modal visible (flex display, opacity 0, scale 95)
+            imageModal.classList.add('flex');
+            imageModal.classList.remove('hidden');
+            
+            // 2. Schedule the transition (needs a small delay for CSS to register the display change)
+            setTimeout(() => {
+                imageModal.classList.remove('opacity-0');
+                modalContent.classList.remove('scale-95');
+            }, 10); // Small delay to trigger CSS transition
+        }
+
+        // Function to hide the modal
+        function hideImageModal() {
+            // 1. Start the transition back (opacity 0, scale 95)
+            imageModal.classList.add('opacity-0');
+            modalContent.classList.add('scale-95');
+
+            // 2. Hide the modal completely after the transition finishes (300ms defined in CSS)
+            setTimeout(() => {
+                imageModal.classList.remove('flex');
+                imageModal.classList.add('hidden');
+                modalImage.src = ''; // Clear image source
+            }, 300);
+        }
+
+        // Attach close listeners to backdrop, close button, and the image itself (cursor is zoom-out)
+        modalBackdrop.addEventListener('click', hideImageModal);
+        modalClose.addEventListener('click', hideImageModal);
+        modalImage.addEventListener('click', hideImageModal);
+
+        // Escape key listener for closure
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !imageModal.classList.contains('hidden')) {
+                hideImageModal();
+            }
+        });
+
+
+        // Core routing logic
+        function updateView(hash) {
+            const path = hash.substring(1) || 'main'; // Default to 'main'
+            const view = views[path];
+
+            // 1. Update Navigation Links
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.id === 'nav-' + path) {
+                    link.classList.add('active');
+                }
+            });
+
+            // 2. Render Content
+            if (view) {
+                viewContainer.innerHTML = `
+                    <div class="mb-8">
+                        <!-- ACCENT COLOR: Lilac/Violet for main title -->
+                        <h1 class="text-6xl font-extrabold text-violet-400 mb-2">${view.title}</h1>
+                        <hr class="border-t-2 border-gray-700 w-1/4 mb-6" />
+                    </div>
+                    ${view.content}
+                `;
+            } else {
+                viewContainer.innerHTML = `
+                    <div class="content-card text-center">
+                        <h1 class="text-4xl font-extrabold text-red-500 mb-4">404 - Page Not Found</h1>
+                        <p class="text-lg text-gray-400">The path you requested does not exist. Please navigate using the header links.</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Listen for hash changes (e.g., user clicks a link or uses back/forward)
+        window.addEventListener('hashchange', () => {
+            updateView(window.location.hash);
+        });
+
+        // Initial load
+        window.addEventListener('load', () => {
+            let initialHash = window.location.hash || '#main';
+            if (initialHash === '') {
+                // If no hash is present, set it to main to ensure links work on first load
+                window.location.hash = '#main';
+            }
+            updateView(initialHash);
+        });
+    </script>
+    <h3 style="color:#ffffff; text-align:center">2025-2026 5D Chung Ho Long</h3>
+</body>
+</html>
