@@ -1,0 +1,83 @@
+/* Import Google Font for Headings (Exo 2) - This helps make the fonts more stylish */
+@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;600;800&display=swap');
+/* Import Inter for body text - Tailwind default */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+/* Custom styles for the dark theme */
+:root {
+    scroll-behavior: smooth;
+    /* Define a stylish font family for titles */
+    --font-title: 'Exo 2', sans-serif;
+}
+
+body {
+    font-family: 'Inter', sans-serif; /* Keep Inter for body text */
+    background-color: #0d1117; /* GitHub Dark BG (Black) */
+    color: #c9d1d9; /* Light text */
+}
+
+/* Apply the new font to all major headers for a stylish look */
+h1, h2, h3 {
+    font-family: var(--font-title);
+}
+
+/* ----------------------------------------------------------- */
+/* REMOVED custom font size overrides (text-6xl etc.) as they 
+   were non-responsive due to !important and causing mobile issues.
+   We now rely on Tailwind's responsive prefixes (e.g., text-4xl sm:text-6xl). 
+   ----------------------------------------------------------- */
+
+.content-card {
+    background-color: #161b22; /* Slightly lighter dark for contrast */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+    padding: 2rem;
+    border-radius: 12px;
+    border: 1px solid #30363d;
+}
+
+/* FIXES FOR NAVIGATION LINKS (BLOCK STYLE) */
+.nav-link {
+    display: block; 
+    padding: 0.5rem 0.5rem; /* Reduced padding for mobile compactness */
+    border-radius: 0.5rem;
+    color: #c9d1d9;
+    background-color: transparent;
+    border: 1px solid transparent;
+    transition: color 0.2s, background-color 0.2s, border 0.2s;
+}
+
+/* Hover State: Subtle lift and accent text color */
+.nav-link:hover {
+    color: #C3A6FF; /* Lilac/Violet Accent */
+    background-color: #1f2733;
+    border: 1px solid #30363d;
+}
+
+/* Active State: Full accent color block */
+.nav-link.active {
+    color: #ffffff;
+    background-color: #C3A6FF; /* PRIMARY ACCENT COLOR: Lilac/Violet */
+    border: 1px solid #C3A6FF;
+}
+
+/* ---------------------------------------------------- */
+/* Fixed Content Range: Crucial for centering main content */
+.content-range {
+    width: 70vw; 
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Fallback for smaller screens to ensure readability and full width */
+@media (max-width: 1023px) {
+     .content-range {
+        width: 95vw; /* Use 95% of width on smaller screens */
+    }
+}
+/* ---------------------------------------------------- */
+
+/* Ensure modal image fits well within the viewport */
+#modal-image {
+    max-width: 90vw;
+    max-height: 90vh;
+}
