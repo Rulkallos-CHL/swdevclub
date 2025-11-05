@@ -122,11 +122,10 @@ const views = {
         content: `
             <div class="mt-8">
                 <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-6">Upcoming Events & News</h2>
-                ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #1', 'This is the first day of our three-day course, focusing on teaching attendees how to make their own tomato clock app with the help of AI, from scratch! 5D Hugo Fung and 5D Carson Leung will be the hosts.', '28 Nov 2025', 'Event')}
-                ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #2', 'This is the second day of our three-day course, focusing on letting attendees to brainstorm whatever they want, into their web app! 5D Isaac Chung will be the host.', '5 Dec 2025', 'Event')}
-                ${generateUpdateItem('Upcoming: AI-Coding Onefile Web App #3', 'This is the last day of our three-day course, focusing on instruct attendees to make their own "Homework Checklist" web app. Mr. Ken Leung will be the host.', '10 Dec 2025', 'Event')}
-
-
+                ${generateUpdateItem('Upcoming: AI-Coding One-file Web App #1', 'This is the first day of our three-day course, focusing on teaching attendees how to make their own tomato clock app with the help of AI, from scratch! 5D Hugo Fung and 5D Carson Leung will be the hosts.', '28 Nov 2025', 'Event')}
+                ${generateUpdateItem('Upcoming: AI-Coding One-file Web App #2', 'This is the second day of our three-day course, focusing on letting attendees to brainstorm whatever they want, into their web app! 5D Isaac Chung will be the host.', '5 Dec 2025', 'Event')}
+                ${generateUpdateItem('Upcoming: AI-Coding One-file Web App #3', 'This is the last day of our three-day course, focusing on instruct attendees to make their own "Homework Checklist" web app. Mr. Ken Leung will be the host.', '10 Dec 2025', 'Event')}
+                ${generateUpdateItem('Upcoming: One-file Web App Competition', 'Send us your creation before the deadline! Get a prize, win an honour!', '13 Feb 2026, 'Event')}
             </div>
         `
     },
@@ -251,3 +250,4 @@ window.addEventListener('load', () => {
     }
     updateView(initialHash);
 });
+
