@@ -114,6 +114,7 @@ const views = {
                 ${generateListItem('AI Hackathon 2025 Silver Award', 'Our school team won silver award in the competition.', 'https://rulkallos-chl.github.io/img/hackathon25.png')}
                 ${generateListItem('CUHKCTF 2025 Awards', 'Our school teams won 6th and 9th place in the competition', 'https://rulkallos-chl.github.io/img/cuhkctf25ranking.png')}
                 ${generateListItem('updating . . .', 'updating . . .', 'https://placehold.co/600x400/3d3d3d/ffffff?text=updating+.+.+.')}
+            
             </div>
         `
     },
@@ -126,6 +127,7 @@ const views = {
                 ${generateUpdateItem('Upcoming: AI-Coding One-file Web App #2', 'This is the second day of our three-day course, focusing on letting attendees to brainstorm whatever they want, into their web app! 5D Isaac Chung will be the host.', '5 Dec 2025', 'Event')}
                 ${generateUpdateItem('Upcoming: AI-Coding One-file Web App #3', 'This is the last day of our three-day course, focusing on instruct attendees to make their own "Homework Checklist" web app. Mr. Ken Leung will be the host.', '10 Dec 2025', 'Event')}
                 ${generateUpdateItem('Upcoming: One-file Web App Competition', 'Send us your creation before the deadline! Get a prize, win an honour!', '13 Feb 2026, 'Event')}
+            
             </div>
         `
     },
@@ -250,4 +252,5 @@ window.addEventListener('load', () => {
     }
     updateView(initialHash);
 });
+
 
