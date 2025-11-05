@@ -94,6 +94,20 @@ const views = {
                 </p>
             </div>
 
+            <div class="content-card mb-8">
+                <!-- Responsive H2 -->
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-white mb-4">One-file Web App Competition (13 Feb 2026)</h2>
+                <hr class="hidden" style="height:30px">
+                <!-- Responsive image -->
+                <center>
+                    <img src="https://rulkallos-chl.github.io/img/1filewebapp_comp_poster.png" style="width:50%;height:50%;">
+                </center>
+                <!-- Responsive Paragraph -->
+                <p class="text-base sm:text-lg text-gray-300 leading-relaxed">
+                    Join our one-file web app competition! We seek for some compassionate learners, to solve some ovwelooked problems and daily chores for the school and society!
+                </p>
+            </div>
+
             <div class="mt-8">
                 <!-- Responsive H1 -->
                 <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-6">Projects and Achievements</h1>
