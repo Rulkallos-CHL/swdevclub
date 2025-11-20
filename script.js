@@ -93,8 +93,8 @@ const views = {
             <div class="mt-8">
                 <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-6">Projects and Achievements</h1>
                 ${generateListItem('AI Hackathon 2025 Silver Award', 'Our school team won silver award in the competition.', 'https://rulkallos-chl.github.io/img/hackathon25.png')}
-                ${generateListItem('CUHKCTF 2025 Awards', 'Our school teams won 6th and 9th place in the competition', 'https://rulkallos-chl.github.io/img/cuhkctf25ranking.png')}
-                ${generateListItem('updating . . .', 'updating . . .', 'https://placehold.co/600x400/3d3d3d/ffffff?text=updating+.+.+.')}
+                ${generateListItem('CUHKCTF 2025 Awards', 'Our school teams won 6th and 9th place in the competition.', 'https://rulkallos-chl.github.io/img/cuhkctf25ranking.png')}
+                ${generateListItem('HUAWEI ICT Competition Finals', 'Our 2 school teams managed to get into the finals, fighting for the HKD 6000 prize!', 'https://rulkallos-chl.github.io/img/huawei_ict_comp.jpeg')}
             
             </div>
         `
@@ -227,3 +227,4 @@ window.addEventListener('load', () => {
     }
     updateView(initialHash);
 });
+
