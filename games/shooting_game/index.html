@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galactic Defender</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for the arcade game feel */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body {
+            background-color: #1a1a2e;
+            font-family: 'Press Start 2P', cursive;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        #game-container {
+            background-color: #0f0f1a;
+            box-shadow: 0 0 40px rgba(71, 240, 255, 0.5);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        canvas {
+            background-color: #000000;
+            border: 4px solid #47f0ff;
+            box-shadow: inset 0 0 10px rgba(71, 240, 255, 0.8);
+            display: block;
+            border-radius: 8px;
+            width: 100%;
+            max-height: 500px;
+        }
+
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* Align items vertically */
+            color: #47f0ff;
+            font-size: 0.75rem;
+            text-shadow: 0 0 5px #00e0ff;
+            padding: 0 0.5rem;
+        }
+
+        /* --- NEW: Skill Bar Styles --- */
+        #skill-container {
+            width: 150px;
+            height: 15px;
+            border: 2px solid #ffd700;
+            border-radius: 4px;
+            background: #333;
+            position: relative;
+        }
+
+        #skill-fill {
+            width: 0%;
+            height: 100%;
+            background-color: #ffd700;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 10px #ffd700;
+        }
+
+        #skill-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8px;
+            color: #000;
+            font-weight: bold;
+            display: none; /* Hidden until full */
+        }
+
+        .button-style {
+            background: linear-gradient(145deg, #00bfff, #0080ff);
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            box-shadow: 0 4px #0059b3;
+            transition: all 0.1s ease;
+            outline: none;
+        }
+
+        .button-style:hover {
+            background: linear-gradient(145deg, #00d5ff, #0099e6);
+            box-shadow: 0 6px #0059b3;
+            transform: translateY(-2px);
+        }
+
+        .button-style:active {
+            box-shadow: 0 2px #0059b3;
+            transform: translateY(2px);
+        }
+        
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px;
+            background-color: rgba(0, 0, 0, 0.9);
+            border: 4px solid #ff479d;
+            color: #ff479d;
+            text-align: center;
+            border-radius: 10px;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(255, 71, 157, 0.8);
+        }
+
+        .user-id {
+            color: #ff479d;
+            font-size: 0.5rem;
+            word-break: break-all;
+            margin-top: 0.5rem;
+            text-align: center;
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 10px; }
+            .info-bar { font-size: 0.6rem; flex-wrap: wrap; gap: 5px;}
+            .button-style { padding: 0.5rem 1rem; font-size: 0.7rem; }
+            #game-container { padding: 0.5rem; }
+            .user-id { font-size: 0.4rem; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div class="info-bar">
+            <span id="score-display">SCORE: 0</span>
+            
+            <div id="skill-container">
+                <div id="skill-fill"></div>
+                <div id="skill-text">PRESS SHIFT</div>
+            </div>
+
+            <span id="lives-display">LIVES: 3</span>
+            <span id="high-score-display">HIGH: 0</span>
+        </div>
+        
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="flex justify-center gap-4 p-2">
+            <button id="startButton" class="button-style">Start Game</button>
+        </div>
+        
+        <div id="message-container">
+            <div id="message-box" class="hidden">
+                <h2 id="message-title" class="text-xl mb-3">Welcome to Galactic Defender</h2>
+                <p id="message-text" class="text-sm mb-4">
+                    Use <span class="text-white">A/D</span> or <span class="text-white">Left/Right Arrow</span> keys to move.<br>
+                    Press <span class="text-white">Spacebar</span> to shoot.<br>
+                    Catch <span style="color: #00ff00;">Green Boxes</span> to Heal!<br>
+                    <br>
+                    <span style="color: #ffd700;">ULTIMATE: Fill the yellow bar and press SHIFT!</span>
+                </p>
+                <button id="message-button" class="button-style text-xs">Press to Start</button>
+            </div>
+        </div>
+        
+        <div class="user-id">
+            User ID: <span id="current-user-id">Authenticating...</span>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db = null;
+        let auth = null;
+        let userId = null;
+        let globalHighScore = 0;
+        let isAuthReady = false;
+
+        const CANVAS_WIDTH = 700;
+        const CANVAS_HEIGHT = 500;
+        const HIGH_SCORE_DOC_PATH = `/artifacts/${appId}/public/data/highscores/global_score`;
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = CANVAS_WIDTH;
+        canvas.height = CANVAS_HEIGHT;
+
+        const scoreDisplay = document.getElementById('score-display');
+        const livesDisplay = document.getElementById('lives-display');
+        const highScoreDisplay = document.getElementById('high-score-display');
+        const startButton = document.getElementById('startButton');
+        const messageBox = document.getElementById('message-box');
+        const messageTitle = document.getElementById('message-title');
+        const messageText = document.getElementById('message-text');
+        const messageButton = document.getElementById('message-button');
+        const currentUserIdSpan = document.getElementById('current-user-id');
+        
+        // NEW: Skill UI Elements
+        const skillFill = document.getElementById('skill-fill');
+        const skillText = document.getElementById('skill-text');
+
+        let gameState = {
+            running: false,
+            score: 0,
+            lives: 3,
+            keys: {},
+            lastShotTime: 0,
+            shotCooldown: 100, 
+            lastEnemySpawnTime: 0,
+            enemySpawnRate: 1500, 
+            player: { x: CANVAS_WIDTH / 2 - 20, y: CANVAS_HEIGHT - 50, w: 40, h: 40, speed: 5 },
+            bullets: [],
+            enemies: [],
+            powerups: [],
+            lastPowerupSpawnTime: 0,
+            powerupSpawnRate: 10000, 
+            // --- NEW: Skill Logic ---
+            skillCharge: 0,
+            skillMaxCharge: 100, // Hits required (weighted by score)
+            animationFrameId: null
+        };
+
+        async function initializeFirebase() {
+            try {
+                if (Object.keys(firebaseConfig).length === 0) {
+                    console.error("Firebase config is missing.");
+                    return;
+                }
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setLogLevel('Debug');
+
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        currentUserIdSpan.textContent = userId;
+                        isAuthReady = true;
+                        setupHighScoreListener();
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                currentUserIdSpan.textContent = "Error";
+            }
+        }
+
+        function setupHighScoreListener() {
+            if (!db || !isAuthReady) return;
+            onSnapshot(doc(db, HIGH_SCORE_DOC_PATH), (docSnapshot) => {
+                if (docSnapshot.exists()) {
+                    globalHighScore = docSnapshot.data().score || 0;
+                    highScoreDisplay.textContent = `HIGH: ${globalHighScore}`;
+                } else {
+                    globalHighScore = 0;
+                    highScoreDisplay.textContent = `HIGH: 0`;
+                    saveHighScore(0);
+                }
+            });
+        }
+
+        async function saveHighScore(newScore) {
+            if (!db || !isAuthReady || newScore <= globalHighScore) return;
+            try {
+                await setDoc(doc(db, HIGH_SCORE_DOC_PATH), {
+                    score: newScore,
+                    timestamp: new Date().toISOString(),
+                    userId: userId
+                });
+            } catch (error) {
+                console.error("Error saving high score:", error);
+            }
+        }
+
+        function showMessage(title, text, buttonText, action) {
+            cancelAnimationFrame(gameState.animationFrameId);
+            messageTitle.textContent = title;
+            messageText.innerHTML = text;
+            messageButton.textContent = buttonText;
+            messageBox.classList.remove('hidden');
+            startButton.classList.add('hidden');
+            messageButton.onclick = () => {
+                messageBox.classList.add('hidden');
+                startButton.classList.remove('hidden');
+                action();
+            };
+        }
+
+        function startGame() {
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.bullets = [];
+            gameState.enemies = [];
+            gameState.powerups = [];
+            gameState.lastPowerupSpawnTime = performance.now();
+            gameState.lastEnemySpawnTime = performance.now();
+            gameState.enemySpawnRate = 1500; 
+            // --- NEW: Reset Skill ---
+            gameState.skillCharge = 0;
+            updateSkillBar();
+            
+            gameState.running = true;
+            updateDisplays();
+            gameLoop(performance.now());
+        }
+
+        function gameOver() {
+            gameState.running = false;
+            if (gameState.score > globalHighScore) {
+                saveHighScore(gameState.score);
+                showMessage("NEW HIGH SCORE!", `You scored ${gameState.score}!`, "Play Again", startGame);
+            } else {
+                showMessage("GAME OVER", `Final Score: ${gameState.score}`, "Play Again", startGame);
+            }
+        }
+
+        function updateDisplays() {
+            scoreDisplay.textContent = `SCORE: ${gameState.score}`;
+            livesDisplay.textContent = `LIVES: ${gameState.lives}`;
+            highScoreDisplay.textContent = `HIGH: ${globalHighScore}`;
+        }
+        
+        // --- NEW: Update Skill Bar ---
+        function updateSkillBar() {
+            const percentage = Math.min(100, (gameState.skillCharge / gameState.skillMaxCharge) * 100);
+            skillFill.style.width = `${percentage}%`;
+            
+            if (percentage >= 100) {
+                skillFill.style.backgroundColor = "#ffffff"; // Flash white when ready
+                skillText.style.display = "block";
+            } else {
+                skillFill.style.backgroundColor = "#ffd700";
+                skillText.style.display = "none";
+            }
+        }
+
+        function healPlayer() {
+            gameState.lives++;
+            updateDisplays();
+        }
+
+        function spawnEnemy() {
+            const type = Math.random() < 0.6 ? 'drone' : 'interceptor'; 
+            let size, speed, scoreValue;
+            
+            if (type === 'drone') {
+                size = 30;
+                speed = 1.5 + Math.floor(gameState.score / 150) * 0.5;
+                scoreValue = 10;
+            } else { 
+                size = 30;
+                speed = 2.5 + Math.floor(gameState.score / 250) * 0.4; 
+                scoreValue = 25;
+            }
+
+            const x = Math.random() * (CANVAS_WIDTH - size);
+            const y = -size;
+            
+            gameState.enemies.push({
+                x, y, w: size, h: size,
+                speed: Math.min(speed, 6),
+                type,
+                baseX: x,
+                spawnTime: performance.now(),
+                scoreValue
+            });
+        }
+
+        function spawnPowerup() {
+            const size = 25;
+            const x = Math.random() * (CANVAS_WIDTH - size);
+            gameState.powerups.push({
+                x: x, y: -size, w: size, h: size, speed: 3
+            });
+        }
+
+        // --- UPDATE: FireBullet now handles velocity (vx, vy) ---
+        function fireBullet() {
+            const now = performance.now();
+            if (now - gameState.lastShotTime > gameState.shotCooldown) {
+                gameState.bullets.push({
+                    x: gameState.player.x + gameState.player.w / 2 - 8, 
+                    y: gameState.player.y,
+                    w: 16, 
+                    h: 40, 
+                    vx: 0,   // No horizontal movement
+                    vy: -15 // Standard vertical speed
+                });
+                gameState.lastShotTime = now;
+            }
+        }
+
+        // --- NEW: SKILL ACTIVATION ---
+        function activateSkill() {
+            if (gameState.skillCharge >= gameState.skillMaxCharge) {
+                gameState.skillCharge = 0;
+                updateSkillBar();
+
+                // Fire 15 bullets in a spread
+                const bulletCount = 15;
+                const startAngle = -45 * (Math.PI / 180); // -45 degrees
+                const endAngle = 45 * (Math.PI / 180);   // +45 degrees
+                const speed = 15;
+
+                for (let i = 0; i < bulletCount; i++) {
+                    // Calculate angle for this bullet
+                    const angle = startAngle + (endAngle - startAngle) * (i / (bulletCount - 1));
+                    
+                    // Calculate velocity vector based on angle
+                    // Math.sin gives x component (left/right), Math.cos gives y (up)
+                    // We negate Y because up is negative in canvas
+                    const vx = Math.sin(angle) * speed;
+                    const vy = -Math.cos(angle) * speed;
+
+                    gameState.bullets.push({
+                        x: gameState.player.x + gameState.player.w / 2 - 8, 
+                        y: gameState.player.y,
+                        w: 16, 
+                        h: 40, 
+                        vx: vx,
+                        vy: vy
+                    });
+                }
+            }
+        }
+
+        function drawPlayer() {
+            ctx.fillStyle = '#ff479d';
+            ctx.beginPath();
+            ctx.moveTo(gameState.player.x + gameState.player.w / 2, gameState.player.y);
+            ctx.lineTo(gameState.player.x, gameState.player.y + gameState.player.h);
+            ctx.lineTo(gameState.player.x + gameState.player.w, gameState.player.y + gameState.player.h);
+            ctx.fill();
+        }
+
+        function drawBullets() {
+            ctx.fillStyle = '#47f0ff';
+            gameState.bullets.forEach(b => {
+                // Rotate drawing for angled bullets (Skill shots)
+                if (b.vx !== 0) {
+                    ctx.save();
+                    ctx.translate(b.x + b.w/2, b.y + b.h/2);
+                    // Calculate rotation angle
+                    const angle = Math.atan2(b.vy, b.vx) + Math.PI/2;
+                    ctx.rotate(angle);
+                    ctx.fillRect(-b.w/2, -b.h/2, b.w, b.h);
+                    ctx.restore();
+                } else {
+                    ctx.fillRect(b.x, b.y, b.w, b.h);
+                }
+            });
+        }
+
+        function drawPowerups() {
+            gameState.powerups.forEach(p => {
+                ctx.fillStyle = '#00ff00';
+                ctx.fillRect(p.x, p.y, p.w, p.h);
+                ctx.fillStyle = '#ffffff';
+                const thickness = 5;
+                ctx.fillRect(p.x + p.w/2 - thickness/2, p.y + 5, thickness, p.h - 10);
+                ctx.fillRect(p.x + 5, p.y + p.h/2 - thickness/2, p.w - 10, thickness);
+            });
+        }
+
+        function drawEnemies() {
+            gameState.enemies.forEach(e => {
+                if (e.type === 'drone') {
+                    ctx.fillStyle = '#ff0000'; 
+                    ctx.fillRect(e.x, e.y, e.w, e.h);
+                } else if (e.type === 'interceptor') {
+                    ctx.fillStyle = '#00FFFF'; 
+                    ctx.beginPath();
+                    ctx.moveTo(e.x + e.w / 2, e.y);
+                    ctx.lineTo(e.x, e.y + e.h);
+                    ctx.lineTo(e.x + e.w, e.y + e.h);
+                    ctx.fill();
+                }
+            });
+        }
+
+        function updatePlayer() {
+            if (gameState.keys['a'] || gameState.keys['ArrowLeft']) {
+                gameState.player.x = Math.max(0, gameState.player.x - gameState.player.speed);
+            }
+            if (gameState.keys['d'] || gameState.keys['ArrowRight']) {
+                gameState.player.x = Math.min(CANVAS_WIDTH - gameState.player.w, gameState.player.x + gameState.player.speed);
+            }
+            if (gameState.keys[' ']) {
+                fireBullet();
+            }
+            // --- NEW: Skill Input ---
+            if (gameState.keys['Shift']) {
+                activateSkill();
+            }
+        }
+
+        // --- UPDATE: Physics now uses VX/VY ---
+        function updateBullets() {
+            gameState.bullets = gameState.bullets.filter(b => {
+                b.x += b.vx;
+                b.y += b.vy;
+                return b.y > -b.h && b.y < CANVAS_HEIGHT && b.x > -b.w && b.x < CANVAS_WIDTH + b.w; 
+            });
+        }
+
+        function updatePowerups() {
+            gameState.powerups = gameState.powerups.filter(p => {
+                p.y += p.speed;
+                if (
+                    p.x < gameState.player.x + gameState.player.w &&
+                    p.x + p.w > gameState.player.x &&
+                    p.y < gameState.player.y + gameState.player.h &&
+                    p.y + p.h > gameState.player.y
+                ) {
+                    healPlayer(); 
+                    return false; 
+                }
+                return p.y < CANVAS_HEIGHT;
+            });
+        }
+
+        function updateEnemies(deltaTime) {
+            const now = performance.now();
+            gameState.enemies = gameState.enemies.filter(e => {
+                e.y += e.speed; 
+                
+                if (
+                    e.x < gameState.player.x + gameState.player.w &&
+                    e.x + e.w > gameState.player.x &&
+                    e.y < gameState.player.y + gameState.player.h &&
+                    e.y + e.h > gameState.player.y
+                ) {
+                    gameState.lives--;
+                    updateDisplays();
+                    if (gameState.lives <= 0) gameOver();
+                    return false; 
+                }
+
+                if (e.y > CANVAS_HEIGHT) {
+                    gameState.lives = Math.max(0, gameState.lives - 1);
+                    updateDisplays();
+                    if (gameState.lives <= 0) gameOver();
+                    return false; 
+                }
+                return true; 
+            });
+        }
+
+        function checkCollisions() {
+            const newBullets = [];
+            const enemiesHitIndices = new Set();
+            let pointsGained = 0;
+
+            gameState.bullets.forEach(b => {
+                let bulletHit = false;
+                gameState.enemies.forEach((e, index) => {
+                    if (!enemiesHitIndices.has(index)) {
+                        const hitPadding = 5; 
+
+                        if (
+                            b.x < e.x + e.w + hitPadding &&
+                            b.x + b.w > e.x - hitPadding &&
+                            b.y < e.y + e.h + hitPadding &&
+                            b.y + b.h > e.y - hitPadding
+                        ) {
+                            bulletHit = true;
+                            pointsGained += e.scoreValue;
+                            enemiesHitIndices.add(index);
+                            
+                            // --- NEW: Charge Skill on Hit ---
+                            if (gameState.skillCharge < gameState.skillMaxCharge) {
+                                gameState.skillCharge += 5; // +5 charge per kill
+                                updateSkillBar();
+                            }
+                        }
+                    }
+                });
+                if (!bulletHit) newBullets.push(b);
+            });
+
+            gameState.enemies = gameState.enemies.filter((_, index) => !enemiesHitIndices.has(index));
+            gameState.bullets = newBullets;
+
+            if (pointsGained > 0) {
+                gameState.score += pointsGained;
+                updateDisplays();
+            }
+        }
+
+        let lastTime = 0;
+        function gameLoop(currentTime) {
+            if (!gameState.running) return;
+            const deltaTime = currentTime - lastTime;
+            lastTime = currentTime;
+
+            if (currentTime - gameState.lastEnemySpawnTime > gameState.enemySpawnRate) {
+                spawnEnemy();
+                gameState.lastEnemySpawnTime = currentTime;
+                gameState.enemySpawnRate = Math.max(500, gameState.enemySpawnRate - 10);
+            }
+
+            if (currentTime - gameState.lastPowerupSpawnTime > gameState.powerupSpawnRate) {
+                spawnPowerup();
+                gameState.lastPowerupSpawnTime = currentTime;
+            }
+
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            updatePlayer();
+            updateBullets();
+            updatePowerups(); 
+            updateEnemies(deltaTime);
+            checkCollisions();
+
+            drawEnemies();
+            drawPowerups(); 
+            drawBullets();
+            drawPlayer();
+
+            gameState.animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function setupListeners() {
+            document.addEventListener('keydown', (e) => {
+                gameState.keys[e.key] = true;
+                // Prevent scrolling but allow Shift
+                if ([' ', 'ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) e.preventDefault(); 
+            });
+            document.addEventListener('keyup', (e) => {
+                gameState.keys[e.key] = false;
+            });
+            startButton.addEventListener('click', () => {
+                startButton.classList.add('hidden');
+                startGame();
+            });
+        }
+        
+        window.onload = function() {
+            initializeFirebase();
+            setupListeners();
+            showMessage(
+                "Welcome, Galactic Defender!",
+                "Protect your sector from the incoming threat.<br>Catch <span style='color:#00ff00'>Green Boxes</span> to Heal!<br>Fill the <span style='color:#ffd700'>Yellow Bar</span> and press <span style='color:#fff'>SHIFT</span> for Ultimate!",
+                "Start Game",
+                startGame
+            );
+        };
+    </script>
+</body>
+</html>
