@@ -14,11 +14,9 @@
                         background: none; /* Remove default background */
                         position: absolute; /* Allows for absolute positioning/movement */
                         
-                        /* --- START: Modified CSS to position the flag to the RIGHT of the table --- */
                         /* Initial position: 0px from the top, and 22% (table width) + 10px (borders) from the left */
                         top: 0; 
                         left: calc(22% + 10px);
-                        /* --- END: Modified CSS --- */
 
                         transition: all 0.3s ease-in-out;
                 }
@@ -54,7 +52,8 @@
                         document.getElementById("countDisplay").innerHTML = clickCount;
 
                         if (clickCount === 100) {
-                                alert("Here is the secrect message: WELCOMETOSPYC");
+                                // Updated alert with the secret message from the original code
+                                alert("Here is the secret message: WELCOMETOSPYC");
                         }
                 }
         </script>
@@ -76,11 +75,8 @@
         </table>
 
         <button onmouseover="moveImage()">
-                <img src="/flag.png" alt="Click Me" style="height: 160%; width: 130%"
+                <img src="flag.png" alt="Click Me" style="height: 160%; width: 130%"
                         id="randomImage" onclick="incrementCount(); moveImage()">
         </button>
 </body>
-
 </html>
-
-
