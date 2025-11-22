@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>PopFlag</title>
+
+        <style>
+                /* Minimal style for the image button */
+                button {
+                        border: none;
+                        cursor: pointer;
+                        padding: 0; /* Remove default padding */
+                        background: none; /* Remove default background */
+                        position: absolute; /* Allows for absolute positioning/movement */
+                        
+                        /* --- START: Modified CSS to position the flag to the RIGHT of the table --- */
+                        /* Initial position: 0px from the top, and 22% (table width) + 10px (borders) from the left */
+                        top: 0; 
+                        left: calc(22% + 10px);
+                        /* --- END: Modified CSS --- */
+
+                        transition: all 0.3s ease-in-out;
+                }
+        </style>
+
+        <script>
+                let clickCount = 0;
+                // Define the fixed boundary (Table width + borders)
+                const boundaryX = 0.22 * window.innerWidth + 10; // 22% of width + 10px border
+
+                function moveImage() {
+                        var img = document.getElementById("randomImage");
+                        var button = img.parentElement;
+                        
+                        if (img.offsetWidth === 0 || img.offsetHeight === 0) {
+                            return;
+                        }
+
+                        // Calculate random X position: Start from the boundaryX up to the window width
+                        // The movement range is (window.innerWidth - boundaryX - img.offsetWidth)
+                        var x = Math.floor(Math.random() * (window.innerWidth - boundaryX - img.offsetWidth)) + boundaryX;
+                        
+                        // Calculate random Y position: Full height movement
+                        var y = Math.floor(Math.random() * (window.innerHeight - img.offsetHeight));
+                        
+                        // Apply movement using the button's style
+                        button.style.left = x + "px";
+                        button.style.top = y + "px";
+                }
+
+                function incrementCount() {
+                        clickCount++;
+                        document.getElementById("countDisplay").innerHTML = clickCount;
+
+                        if (clickCount === 100) {
+                                alert("SPYCGREAT");
+                        }
+                }
+        </script>
+</head>
+<body>
+        <table style="border: 5px double black; height: 16%; width: 22%; background-color: white; position: fixed; z-index: 10;">
+                <tr>
+                        <td style="text-align: center; vertical-align: middle; font-family: Arial, sans-serif;">
+                                <h1>PopFlag</h1>
+                        </td>
+                </tr>
+                <tr>
+                        <td style="text-align: center; vertical-align: middle; font-family: Arial, sans-serif;">
+                                <p>
+                                        <h3>Click Count: <span id="countDisplay">0</span></h3>
+                                </p>
+                        </td>
+                </tr>
+        </table>
+
+        <button onmouseover="moveImage()">
+                <img src="flag.png" alt="Click Me" style="height: 160%; width: 130%"
+                        id="randomImage" onclick="incrementCount(); moveImage()">
+        </button>
+</body>
+</html>
