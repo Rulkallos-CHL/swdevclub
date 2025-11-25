@@ -1,0 +1,79 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <title>Seating App Readme</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            max-width: 800px;
+        }
+
+        h1,
+        h2 {
+            color: #2c3e50;
+        }
+
+        ul {
+            margin-left: 20px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Seating App - Quick Start Guide</h1>
+
+    <h2>Quick Start</h2>
+    <ul>
+        <li><strong>Import:</strong> Click “Import Class List” and choose an Excel
+            (<code>.xls</code>/<code>.xlsx</code>) classlist (download from PYCnet) or a previously exported <code>seat_readable.txt</code>. The
+            app auto-detects classes and builds class buttons.</li>
+        <li><strong>Choose class:</strong> Click a class button (turns green) to set the active class.</li>
+        <li><strong>Assignment:</strong> Pick <em>Random</em> (shuffle) or <em>Sequential</em> (by number; direction
+            depends on door setting).</li>
+        <li><strong>Generate:</strong> Click “Generate Seating.” Drag seats to rearrange. Drop onto gray seats to move,
+            or into “Unused Students” to store temporarily. Drag back to place.</li>
+        <li><strong>Advanced:</strong> Use “Add New Column” (left/right) or “Advanced” (custom title, rows/columns, 1–2
+            doors).</li>
+        <li><strong>Export:</strong> Download <code>PNG/JPG</code> (image), <code>PDF</code> (document), or
+            <code>TXT</code> (re-importable layout).</li>
+    </ul>
+
+    <h2>Q &amp; A</h2>
+    <h3>Which file formats are supported?</h3>
+    <p>Excel with header “pyccode” and either “Class/No.” or “Class No.”; or <code>seat_readable.txt</code> from a prior
+        export.</p>
+    <p>In case you don't know how to get the supported Excel document：</p>
+    <p>1. Login PYCnet, go to "Manage my group" of "Messages".</p>
+    <p>2. Select "Create new group" or an existing class group.</p>
+    <p>3. Select the students you want to be in the group.</p>
+    <p>4. Select "Save as Excel file".</p>
+    <p>Then you should obtain a supported Excel document.</p>
+
+    <h3>What do Random and Sequential do?</h3>
+    <p><em>Random</em> shuffles; <em>Sequential</em> sorts by student number and fills by columns from the door side.
+    </p>
+
+    <h3>How do doors affect seating?</h3>
+    <p>1 door fills from left; 2 doors set fills from right and shows front/back door labels.</p>
+
+    <h3>How to create aisles or gaps?</h3>
+    <p>Add a left/right column or set custom columns, then leave cells empty (gray, non-draggable).</p>
+
+    <h3>How do exports differ?</h3>
+    <p><code>PNG/JPG</code> for sharing; <code>PDF</code> for printing/archiving; <code>TXT</code> to fully restore the
+        layout later.</p>
+
+    <h3>Drag-and-drop tips?</h3>
+    <p>Drag colored/white seats; targets highlight on hover; storage strip accepts drops; gray seats are fixed
+        placeholders.</p>
+
+
+
+</body></html>
