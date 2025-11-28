@@ -123,7 +123,7 @@ const views = {
                 
                 ${generateToolCard('QR Code Generator', 'Instantly convert any URL or text into a scannable QR code for easy sharing and distribution.', 'https://www5.pyc.edu.hk/pycnet/it_in_education/qr_code_gen.php', 'M3 3h8v8H3zM15 3h6v6h-6zM3 15h8v6H3zM15 15h6v6h-6zM8 8h1M19 5h1M5 19h1M17 17h1M17 19h1M19 19h1M15 5h1M19 7h1M5 5h1M5 7h1M7 5h1', 'QR Code Icon')}
                 
-                ${generateToolCard('Seating Plan Arranger', 'Tool for generating and visualizing optimal seating arrangements for classrooms or events.', 'https://aero.pyc.edu.hk/~itp/seating_plan/', 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', 'Seating Plan Icon')}
+                ${generateToolCard('Seating Plan Arranger', 'Tool for generating and visualizing optimal seating arrangements for classrooms or events.', 'https://spycswdev.vercel.app/tools/seatingplan', 'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z', 'Seating Plan Icon')}
                 
                 ${generateToolCard('Crowdscontrol (testing)', 'Internal testing platform for managing and simulating crowd dynamics and flow control.', 'https://aero.pyc.edu.hk/~itp/crowdscontrol/', 'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 7A4 4 0 0 1 9 15M17 7A4 4 0 0 1 17 15', 'Crowd Control Icon')}
             </div>
@@ -227,4 +227,5 @@ window.addEventListener('load', () => {
     }
     updateView(initialHash);
 });
+
 
