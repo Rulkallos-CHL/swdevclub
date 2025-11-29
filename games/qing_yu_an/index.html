@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>青玉案·夢回：燈火闌珊處</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;700;900&display=swap');
+        
+        /* --- 基礎設定 --- */
+        body {
+            font-family: 'Noto Serif TC', serif;
+            background-color: #0d0d0d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-app {
+            width: 100vw;
+            height: 100vh;
+            max-width: 1600px;
+            max-height: 900px;
+            background-color: #000;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 1);
+        }
+
+        /* --- 背景與氛圍 --- */
+        .scene-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            transition: opacity 1.5s ease-in-out, transform 15s ease-out;
+            z-index: 0;
+            opacity: 0;
+            filter: brightness(0.8);
+        }
+        .scene-bg.active {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        
+        .vignette {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.6) 80%, rgba(0,0,0,1) 100%);
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        /* 詩詞關鍵字高亮 (EDB 重點) */
+        .keyword {
+            color: #ffd700;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+            border-bottom: 1px dashed #ffb300;
+            cursor: help;
+        }
+
+        /* --- 對話框系統 --- */
+        #dialogue-layer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 35%;
+            background: linear-gradient(to top, rgba(0,0,0,1), rgba(20,15,10,0.95), rgba(0,0,0,0));
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 2rem 4rem 3rem 4rem;
+            box-sizing: border-box;
+            transition: transform 0.2s;
+        }
+
+        #character-name-box {
+            align-self: flex-start;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, #5a1a1a, transparent);
+            padding: 5px 30px 5px 15px;
+            border-left: 4px solid #ffb300;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #character-name {
+            font-size: 1.6rem;
+            color: #ffca28;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .char-tag {
+            font-size: 0.9rem;
+            color: #ccc;
+            font-style: italic;
+        }
+
+        #dialogue-text {
+            font-size: 1.35rem;
+            color: #e0e0e0;
+            line-height: 1.8;
+            min-height: 4.5rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        .next-indicator {
+            position: absolute;
+            bottom: 30px;
+            right: 50px;
+            width: 15px; 
+            height: 15px; 
+            border-right: 3px solid #ffb300;
+            border-bottom: 3px solid #ffb300;
+            transform: rotate(45deg);
+            animation: pulse 1s infinite;
+            display: none;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.3; transform: rotate(45deg) translate(0, 0); }
+            50% { opacity: 1; transform: rotate(45deg) translate(5px, 5px); }
+            100% { opacity: 0.3; transform: rotate(45deg) translate(0, 0); }
+        }
+
+        /* --- 選項系統 --- */
+        #choices-container {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .choice-btn {
+            background: rgba(30, 30, 30, 0.9);
+            border: 1px solid #555;
+            border-left: 4px solid #888;
+            color: #ddd;
+            padding: 20px 40px;
+            width: 60%;
+            max-width: 800px;
+            text-align: left;
+            font-size: 1.2rem;
+            font-family: 'Noto Serif TC', serif;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+        .choice-btn:hover {
+            background: #2a1b15;
+            border-color: #ffb300;
+            border-left-color: #ffb300;
+            color: #ffb300;
+            transform: translateX(10px);
+        }
+
+        /* --- 標題畫面 --- */
+        #title-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ffb300;
+        }
+        .title-main { font-size: 5rem; letter-spacing: 1rem; margin-bottom: 1rem; text-shadow: 0 0 20px #ffb300; }
+        .title-sub { font-size: 1.5rem; color: #888; margin-bottom: 4rem; letter-spacing: 0.3rem; }
+
+        /* --- 小遊戲通用 UI --- */
+        #minigame-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 40;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .game-area {
+            position: relative;
+            width: 80%;
+            height: 70%;
+            border: 2px solid #333;
+            overflow: hidden;
+            background: #111;
+        }
+
+        /* 誘惑小遊戲 */
+        .distraction-item {
+            position: absolute;
+            cursor: pointer;
+            font-size: 1.5rem;
+            animation: float linear infinite;
+            user-select: none;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* --- 響應式 --- */
+        @media (max-width: 768px) {
+            .title-main { font-size: 2.5rem; letter-spacing: 0.2rem; }
+            #dialogue-layer { padding: 1.5rem; height: 45%; }
+            .choice-btn { width: 90%; font-size: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-app">
+        <div id="title-screen">
+            <h1 class="title-main">青玉案·夢回</h1>
+            <h2 class="title-sub">眾裡尋他千百度 · 燈火闌珊處</h2>
+            <button class="choice-btn" style="text-align: center; width: auto;" onclick="startGame()">入夢 · 淳熙二年元夕</button>
+            <p style="margin-top: 20px; color: #555; font-size: 0.8rem;">本遊戲依據香港教育局課程指引改編</p>
+        </div>
+
+        <div id="scene-bg-1" class="scene-bg"></div>
+        <div id="scene-bg-2" class="scene-bg"></div>
+        <div class="vignette"></div>
+
+        <div id="particles" style="position:absolute; inset:0; pointer-events:none;"></div>
+
+        <div id="dialogue-layer" style="display: none;" onclick="handleDialogueClick()">
+            <div id="character-name-box">
+                <span id="character-name"></span>
+            </div>
+            <div id="dialogue-text"></div>
+            <div class="next-indicator" id="next-indicator"></div>
+        </div>
+
+        <div id="choices-container" style="display: none;"></div>
+
+        <div id="minigame-overlay"></div>
+    </div>
+
+    <script>
+        // --- 資源配置 ---
+        const IMAGES = {
+            START: 'https://placehold.co/1600x900/000000/ffb300?text=序章：星如雨',
+            MARKET: 'https://placehold.co/1600x900/2a1b15/ff8c00?text=第一幕：花千樹與雕車',
+            LADIES: 'https://placehold.co/1600x900/4a148c/ffb300?text=第二幕：盈盈笑語',
+            CONTEST: 'https://placehold.co/1600x900/8b0000/ffecb3?text=第三幕：魚龍舞',
+            DARK: 'https://placehold.co/1600x900/050505/333333?text=轉折：燈火闌珊',
+            SOLITUDE: 'https://placehold.co/1600x900/0d1b2a/778da9?text=結局：孤高'
+        };
+
+        const CHARS = {
+            XIN: { name: "辛棄疾", tag: "憂國詞人", color: "#ffca28" },
+            ME: { name: "我", tag: "旁觀者", color: "#a8dadc" },
+            YE: { name: "葉知秋", tag: "舊識書生", color: "#ff6b6b" },
+            LADY: { name: "盛裝仕女", tag: "遊人", color: "#e1bee7" },
+            NARRATOR: { name: "", tag: "", color: "#ccc" }
+        };
+
+        // --- 劇情數據 (依照 EDB 解析優化) ---
+        const SCENES = {
+            'start': {
+                bg: IMAGES.START,
+                script: [
+                    { char: CHARS.NARRATOR, text: "南宋淳熙二年，臨安元夕。" },
+                    { char: CHARS.NARRATOR, text: "一陣轟鳴聲劃破長夜，你抬頭望去，只見漫天焰火如流星般灑落。" },
+                    { char: CHARS.NARRATOR, text: "此景正是——<span class='keyword'>「東風夜放花千樹，更吹落，星如雨」</span>。" },
+                    { char: CHARS.ME, text: "（驚嘆）好美的煙花... 簡直像滿城的樹都開了花。" },
+                    { char: CHARS.XIN, text: "（聲音低沈）花？那是火藥。本該用在沙場上的火藥，如今卻成了妝點太平的玩物。" },
+                    { char: CHARS.NARRATOR, text: "你轉過身，看見一位中年男子。他腰間雖懸劍，卻被這熙攘的人群擠得步履維艱。" },
+                    { char: CHARS.XIN, text: "滿城燈火，照得這臨安如同白晝。可這光亮，卻照不見北方的故土。" }
+                ],
+                next: 'scene_market'
+            },
+            'scene_market': {
+                bg: IMAGES.MARKET,
+                script: [
+                    { char: CHARS.NARRATOR, text: "你們隨著人流前行。街道上充滿了極致的奢華氣息。" },
+                    { char: CHARS.NARRATOR, text: "華麗的馬車駛過，留下一陣濃郁的香氣，令人幾乎窒息。這便是<span class='keyword'>「寶馬雕車香滿路」</span>。" },
+                    { char: CHARS.ME, text: "這香氣太濃了，幾乎蓋過了火藥味。" },
+                    { char: CHARS.XIN, text: "這便是臨安的味道。暖風熏得遊人醉... 這些權貴沈溺於此，早忘了靖康之恥。" },
+                    { char: CHARS.LADY, text: "（一位頭戴金飾的女子攔住去路）喲，這不是辛大人嗎？今夜元宵佳節，何必板著個臉？" },
+                    { char: CHARS.NARRATOR, text: "女子頭上的金飾在燈光下閃閃發光，正如詞中所云<span class='keyword'>「蛾兒雪柳黃金縷」</span>。" },
+                    { char: CHARS.LADY, text: "來嘛，飲一杯酒，聽一曲鳳簫，把那些煩心事都忘了。" }
+                ],
+                choices: [
+                    { text: "（沈醉）這姐姐說得對，既然來了，不如享受這盛世繁華。", target: 'bad_end_indulge' },
+                    { text: "（清醒）婉言謝絕，這些熱鬧不屬於我們。", target: 'scene_ye' }
+                ]
+            },
+            'bad_end_indulge': {
+                script: [
+                    { char: CHARS.XIN, text: "（失望地看著你）原來你也和他們一樣... 罷了，道不同不相為謀。" },
+                    { char: CHARS.NARRATOR, text: "辛棄疾轉身離去，消失在人群中。你留在了溫柔鄉里，卻感到心中空蕩蕩的。" },
+                    { char: CHARS.NARRATOR, text: "【結局：隨波逐流】你迷失在了這虛假的繁華之中。" }
+                ],
+                next: 'title' // Reset
+            },
+            'scene_ye': {
+                bg: IMAGES.LADIES,
+                script: [
+                    { char: CHARS.ME, text: "多謝美意，但我們還有路要趕。" },
+                    { char: CHARS.LADY, text: "切，真是不解風情。<span class='keyword'>「笑語盈盈暗香去」</span>，人家才不理你們呢。" },
+                    { char: CHARS.NARRATOR, text: "女子轉身笑著離開了，只留下一陣香風。" },
+                    { char: CHARS.XIN, text: "（嘆息）商女不知亡國恨，隔江猶唱後庭花。小友，你的定力不錯。" },
+                    { char: CHARS.NARRATOR, text: "正說話間，前方傳來一陣喧鬧。一個醉醺醺的書生正在燈下高談闊論。" },
+                    { char: CHARS.YE, text: "今夜這<span class='keyword'>「鳳簫聲動」</span>，這<span class='keyword'>「玉壺光轉」</span>，都是為我葉某人準備的！" },
+                    { char: CHARS.XIN, text: "葉知秋... 他當年也是個慷慨悲歌之士，如今為了功名，已徹底融入這群魔亂舞之中了。" },
+                    { char: CHARS.YE, text: "辛大人！你看！那邊的<span class='keyword'>「一夜魚龍舞」</span>多壯觀！只要我再寫幾首應景的詩，今晚我就能得到丞相的賞識！" },
+                    { char: CHARS.XIN, text: "知秋，你忘了我們當年在北方的誓言了嗎？" },
+                    { char: CHARS.YE, text: "（臉色一變，隨即大笑）誓言？能當飯吃嗎？能換來這臨安的豪宅美酒嗎？辛大人，你也醒醒吧！沒人想打仗了！" },
+                    { char: CHARS.ME, text: "真實的，看錯你了！"}
+                ],
+                next: 'minigame_reject'
+            },
+            'minigame_reject': {
+                // 這裡觸發小遊戲：在繁華中尋找清醒
+                script: [
+                    { char: CHARS.XIN, text: "（痛苦閉眼）滿眼繁華，皆是虛妄。小友，我要找的人絕不是他們。" },
+                    { char: CHARS.XIN, text: "幫我避開這些喧囂，我要去安靜的地方。" }
+                ],
+                minigame: 'reject_temptation',
+                next: 'scene_dim_light'
+            },
+            'scene_dim_light': {
+                bg: IMAGES.DARK,
+                script: [
+                    { char: CHARS.NARRATOR, text: "你與辛棄疾費力地穿過了最熱鬧的街區，拒絕了無數花燈與美酒的誘惑。" },
+                    { char: CHARS.NARRATOR, text: "周圍的喧囂聲漸漸遠去，燈光也變得稀疏暗淡。這裡已是長街的盡頭。" },
+                    { char: CHARS.ME, text: "先生，這裡什麼都沒有，又黑又冷。我們要找的人真的在這裡嗎？" },
+                    { char: CHARS.XIN, text: "（停下腳步，目光炯炯）正是因為這裡冷清，才會有清醒的人。" },
+                    { char: CHARS.NARRATOR, text: "辛棄疾回過頭，望向身後那片流光溢彩的鬧市。" },
+                    { char: CHARS.XIN, text: "我看遍了千萬人，找了千萬次... <span class='keyword'>「眾裡尋他千百度」</span>..." },
+                    { char: CHARS.XIN, text: "他們都在笑，都在醉，唯獨這裡..." },
+                    { char: CHARS.NARRATOR, text: "他在昏暗的角落停下。那裡並沒有別人，只有一株在寒風中獨自挺立的梅花，和一盞快要熄滅的舊燈籠。" },
+                    { char: CHARS.NARRATOR, text: "這便是——<span class='keyword'>「驀然迴首，那人卻在，燈火闌珊處」</span>。" }
+                ],
+                choices: [
+                    { text: "【家國解讀】那人是「未酬的壯志」，在偏安的朝廷中無人理解。", target: 'ending_nation' },
+                    { text: "【品格解讀】那人是「高潔的自我」，不願與世俗同流合污。", target: 'ending_integrity' }
+                ]
+            },
+            'ending_nation': {
+                bg: IMAGES.SOLITUDE,
+                script: [
+                    { char: CHARS.XIN, text: "（撫摸劍柄）沒錯。朝廷偏安，沈醉於歌舞。唯有我這份抗金復國的志向，像這盞孤燈一樣，被遺忘在角落。" },
+                    { char: CHARS.XIN, text: "但即便無人理解，這盞燈也絕不會熄滅。" },
+                    { char: CHARS.NARRATOR, text: "你明白了。這首詞寫的是元夕，更是寫他孤軍奮戰的悲涼與堅守。" },
+                    { char: CHARS.NARRATOR, text: "【結局壹：孤臣孽子之淚】" }
+                ],
+                next: 'title'
+            },
+            'ending_integrity': {
+                bg: IMAGES.SOLITUDE,
+                script: [
+                    { char: CHARS.XIN, text: "（看著梅花）世人皆愛牡丹之富貴，我獨愛此梅之冷傲。" },
+                    { char: CHARS.XIN, text: "如果不與他們同流合污，就注定要站在這燈火闌珊的暗處，那我甘之如飴。" },
+                    { char: CHARS.NARRATOR, text: "你明白了。這首詞不僅是政治抱負，更是一種高潔人格的自我寫照。" },
+                    { char: CHARS.NARRATOR, text: "【結局貳：高士獨醒之志】" }
+                ],
+                next: 'title'
+            },
+            'title': {
+                script: [],
+                next: null // Reload
+            }
+        };
+
+        // --- 遊戲狀態 ---
+        let state = {
+            scene: 'start',
+            index: 0,
+            isTyping: false,
+            bgSlot: 1
+        };
+
+        // --- 核心功能 ---
+
+        function startGame() {
+            document.getElementById('title-screen').style.opacity = 0;
+            setTimeout(() => {
+                document.getElementById('title-screen').style.display = 'none';
+                document.getElementById('dialogue-layer').style.display = 'flex';
+                initFireworks();
+                loadScene('start');
+            }, 1000);
+        }
+
+        function loadScene(sceneId) {
+            if (sceneId === 'title') {
+                location.reload();
+                return;
+            }
+            state.scene = sceneId;
+            state.index = 0;
+            const scene = SCENES[sceneId];
+
+            if (scene.bg) setBackground(scene.bg);
+            
+            if (scene.minigame && !scene.script) {
+                // 如果是純小遊戲場景
+                runMinigame(scene.minigame, scene.next);
+            } else {
+                renderDialogue();
+            }
+        }
+
+        function setBackground(url) {
+            const prev = document.getElementById(`scene-bg-${state.bgSlot}`);
+            state.bgSlot = state.bgSlot === 1 ? 2 : 1;
+            const next = document.getElementById(`scene-bg-${state.bgSlot}`);
+            
+            next.style.backgroundImage = `url('${url}')`;
+            next.classList.add('active');
+            prev.classList.remove('active');
+        }
+
+        function renderDialogue() {
+            const scene = SCENES[state.scene];
+            const layer = document.getElementById('dialogue-layer');
+            const choices = document.getElementById('choices-container');
+            
+            choices.style.display = 'none';
+            layer.style.display = 'flex';
+
+            if (state.index >= scene.script.length) {
+                if (scene.minigame) {
+                    layer.style.display = 'none';
+                    runMinigame(scene.minigame, scene.next);
+                } else if (scene.choices) {
+                    renderChoices(scene.choices);
+                } else if (scene.next) {
+                    loadScene(scene.next);
+                }
+                return;
+            }
+
+            const line = scene.script[state.index];
+            const nameBox = document.getElementById('character-name-box');
+            const nameEl = document.getElementById('character-name');
+            
+            if (line.char === CHARS.NARRATOR) {
+                nameBox.style.visibility = 'hidden';
+            } else {
+                nameBox.style.visibility = 'visible';
+                nameEl.innerHTML = `<span style="color:${line.char.color}">${line.char.name}</span><span class="char-tag">${line.char.tag}</span>`;
+            }
+
+            typeWriter(line.text);
+        }
+
+        function typeWriter(text) {
+            state.isTyping = true;
+            const el = document.getElementById('dialogue-text');
+            const indicator = document.getElementById('next-indicator');
+            el.innerHTML = '';
+            indicator.style.display = 'none';
+
+            let i = 0;
+            const speed = 30;
+
+            // 處理 HTML 標籤不被打斷
+            function type() {
+                if (!state.isTyping) {
+                    el.innerHTML = text; // 瞬間完成
+                    finishType();
+                    return;
+                }
+
+                if (i < text.length) {
+                    if (text[i] === '<') {
+                        let tag = '';
+                        while (text[i] !== '>') {
+                            tag += text[i];
+                            i++;
+                        }
+                        tag += '>';
+                        i++;
+                        el.innerHTML += tag;
+                    } else {
+                        el.innerHTML += text[i];
+                        i++;
+                    }
+                    setTimeout(type, speed);
+                } else {
+                    finishType();
+                }
+            }
+            type();
+        }
+
+        function finishType() {
+            state.isTyping = false;
+            document.getElementById('next-indicator').style.display = 'block';
+        }
+
+        function handleDialogueClick() {
+            if (state.isTyping) {
+                state.isTyping = false; // 觸發瞬間完成
+            } else {
+                state.index++;
+                renderDialogue();
+            }
+        }
+
+        function renderChoices(choicesData) {
+            const container = document.getElementById('choices-container');
+            container.innerHTML = '';
+            container.style.display = 'flex';
+            document.getElementById('dialogue-layer').style.display = 'none';
+
+            choicesData.forEach(c => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.textContent = c.text;
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    loadScene(c.target);
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // --- 特效與小遊戲 ---
+
+        function initFireworks() {
+            // 簡單的 CSS 粒子效果模擬「星如雨」
+            const container = document.getElementById('particles');
+            setInterval(() => {
+                if(document.hidden) return;
+                const p = document.createElement('div');
+                p.style.cssText = `
+                    position: absolute;
+                    width: 4px; height: 4px;
+                    background: ${Math.random() > 0.5 ? '#ffeb3b' : '#ff5722'};
+                    left: ${Math.random() * 100}vw;
+                    top: -10px;
+                    border-radius: 50%;
+                    animation: fall ${2 + Math.random() * 3}s linear;
+                    opacity: 0.8;
+                `;
+                container.appendChild(p);
+                setTimeout(() => p.remove(), 5000);
+            }, 200);
+
+            // 注入 CSS 動畫
+            const style = document.createElement('style');
+            style.innerHTML = `
+                @keyframes fall {
+                    to { transform: translateY(100vh); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // 小遊戲：眾裡尋他千百度（拒絕誘惑）
+        function runMinigame(type, nextScene) {
+            const overlay = document.getElementById('minigame-overlay');
+            overlay.innerHTML = '';
+            overlay.style.display = 'flex';
+
+            if (type === 'reject_temptation') {
+                overlay.innerHTML = `
+                    <div class="text-center text-white mb-4">
+                        <h2 style="font-size: 2rem; color: #ffca28; margin-bottom: 10px;">【心志試煉】眾裡尋他</h2>
+                        <p>點擊畫面中<span style="color:#aaa;">暗淡的字詞</span>以保持清醒<br>切勿觸碰<span style="color:#ff5722;">鮮豔的誘惑</span>！</p>
+                        <div id="game-status" style="margin-top:10px;">進度: 0/5</div>
+                    </div>
+                    <div class="game-area" id="temptation-area"></div>
+                `;
+                
+                let progress = 0;
+                let active = true;
+                const area = document.getElementById('temptation-area');
+                const status = document.getElementById('game-status');
+                
+                const correctWords = ["孤獨", "清醒", "冷梅", "暗香", "故土", "愁緒"];
+                const wrongWords = ["富貴", "歡笑", "黃金", "美酒", "功名", "寶馬", "花燈"];
+
+                function spawnWord() {
+                    if (!active) return;
+                    const isTarget = Math.random() > 0.6; // 40% 機率是目標
+                    const word = isTarget 
+                        ? correctWords[Math.floor(Math.random()*correctWords.length)]
+                        : wrongWords[Math.floor(Math.random()*wrongWords.length)];
+                    
+                    const el = document.createElement('div');
+                    el.textContent = word;
+                    el.className = 'distraction-item';
+                    el.style.left = Math.random() * 90 + '%';
+                    el.style.animationDuration = (3 + Math.random() * 4) + 's';
+                    
+                    if (isTarget) {
+                        el.style.color = '#ccc';
+                        el.style.fontSize = '1.2rem';
+                        el.style.textShadow = '0 0 5px #fff';
+                        el.onclick = () => {
+                            progress++;
+                            status.textContent = `進度: ${progress}/5`;
+                            el.remove();
+                            // 成功特效
+                            area.style.borderColor = '#fff';
+                            setTimeout(()=>area.style.borderColor='#333', 200);
+                            
+                            if (progress >= 5) {
+                                active = false;
+                                status.textContent = "試煉通過：世人皆醉我獨醒";
+                                status.style.color = "#4caf50";
+                                setTimeout(() => {
+                                    overlay.style.display = 'none';
+                                    loadScene(nextScene);
+                                }, 1500);
+                            }
+                        };
+                    } else {
+                        el.style.color = '#ff5722';
+                        el.style.fontWeight = 'bold';
+                        el.style.fontSize = '1.8rem';
+                        el.style.textShadow = '0 0 10px #ff0000';
+                        el.style.zIndex = 10;
+                        el.onclick = () => {
+                            // 懲罰：扣分或震動
+                            progress = Math.max(0, progress - 1);
+                            status.textContent = `進度: ${progress}/5 (被誘惑干擾了！)`;
+                            status.style.color = "#f44336";
+                            area.classList.add('shake');
+                            setTimeout(()=> {
+                                area.classList.remove('shake');
+                                status.style.color = "#fff";
+                            }, 500);
+                            el.remove();
+                        };
+                    }
+                    
+                    area.appendChild(el);
+                    
+                    // Cleanup
+                    setTimeout(() => { if(el.parentNode) el.remove(); }, 7000);
+                    
+                    if (active) setTimeout(spawnWord, 800);
+                }
+                
+                spawnWord();
+            }
+        }
+    </script>
+    <style>
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake { 
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+    </style>
+</body>
+</html>
