@@ -37,36 +37,13 @@
             background: rgba(255, 179, 0, 0.05);
         }
         
-        .character-narrator {
-            color: #888;
-            font-style: italic;
-        }
-        
-        .character-xin {
-            color: #ffca28;
-            font-weight: 600;
-        }
-        
-        .character-me {
-            color: #a8dadc;
-        }
-        
-        .character-ye {
-            color: #ff6b6b;
-        }
-        
-        .character-lady {
-            color: #e1bee7;
-        }
-        
-        .character-teacher {
-            color: #e0e0e0;
-        }
-        
-        .character-uxin {
-            color: #ffca28;
-            opacity: 0.8;
-        }
+        .character-narrator { color: #888; font-style: italic; }
+        .character-xin { color: #ffca28; font-weight: 600; }
+        .character-me { color: #a8dadc; }
+        .character-ye { color: #ff6b6b; }
+        .character-lady { color: #e1bee7; }
+        .character-teacher { color: #e0e0e0; }
+        .character-uxin { color: #ffca28; opacity: 0.8; }
         
         .scene-header {
             background: rgba(20, 20, 20, 0.95);
@@ -122,11 +99,17 @@
             background: rgba(233, 30, 99, 0.1);
             border-left: 4px solid #e91e63;
         }
+
+        mark {
+            background-color: rgba(217, 119, 6, 0.4);
+            color: #fde68a;
+            border-radius: 2px;
+            padding: 0 2px;
+        }
     </style>
 </head>
 <body class="p-4">
     <div class="max-w-6xl mx-auto">
-        <!-- 標題區 -->
         <div class="text-center mb-8 p-6 bg-gradient-to-r from-gray-900 to-black rounded-xl shadow-xl">
             <h1 class="text-4xl font-bold text-amber-300 mb-2">青玉案·元夕 - 劇本查看器</h1>
             <h2 class="text-xl text-gray-400 mb-4">眾裡尋他千百度，驀然迴首，那人卻在，燈火闌珊處</h2>
@@ -145,28 +128,25 @@
                 </div>
             </div>
             <p class="text-gray-500 text-sm mt-4">
-                此頁面自動從 index.html 提取劇情資料，當原始檔案更新時，此處內容也會自動更新。
+                此頁面自動從 index.html 提取劇情資料。
             </p>
         </div>
         
-        <!-- 場景導航 -->
         <div class="scene-header p-4 rounded-lg mb-6 shadow-lg">
-            <div class="flex flex-wrap justify-between items-center">
+            <div class="flex flex-wrap justify-between items-center gap-4">
                 <h3 class="text-xl font-bold text-amber-200">場景導航</h3>
-                <div class="flex gap-2">
+                <div class="flex gap-2 flex-grow justify-end">
                     <input type="text" id="search-scenes" placeholder="搜尋場景或對話..." 
-                           class="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-amber-500 w-64">
-                    <button id="toggle-all" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
-                        展開/收合所有
+                           class="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-700 focus:outline-none focus:border-amber-500 w-full max-w-md">
+                    <button id="toggle-all" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition whitespace-nowrap">
+                        收合所有
                     </button>
                 </div>
             </div>
-            <div id="scene-navigation" class="flex flex-wrap gap-2 mt-4">
-                <!-- 場景鏈接將動態生成 -->
-            </div>
+            <div id="scene-navigation" class="flex flex-wrap gap-2 mt-4 max-h-32 overflow-y-auto">
+                </div>
         </div>
         
-        <!-- 場景容器 -->
         <div id="scenes-container">
             <div class="text-center py-10 text-gray-500" id="loading-message">
                 <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-500 mb-4"></div>
@@ -174,13 +154,12 @@
             </div>
         </div>
         
-        <!-- 返回按鈕 -->
         <div class="text-center mt-8 pt-6 border-t border-gray-800">
-            <a href="/games/qing_yu_an/index.html" class="inline-block bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg">
-                返回遊戲
+            <a href="index.html" class="inline-block bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 shadow-lg">
+                返回遊戲 (index.html)
             </a>
             <p class="text-gray-500 text-sm mt-4">
-                發現問題或資料未更新？請確認 index.html 與 scenes.html 在同一目錄下。
+                Viewer v1.1 | Fixed Parsing Logic
             </p>
         </div>
     </div>
@@ -191,78 +170,124 @@
         let CHARS = {};
         let IMAGES = {};
         let allScenesLoaded = false;
+        let isExpanded = true;
         
-        // 從 index.html 提取劇情資料
+        /**
+         * 幫助函數：安全地從字串中提取JS物件
+         * 使用括號計數而不是Regex，以支援嵌套物件和函數
+         */
+        function extractVariableObject(source, varName, context = {}) {
+            // Find variable definition: "const SCENES =" or "var SCENES ="
+            const regex = new RegExp(`(?:const|var|let)\\s+${varName}\\s*=\\s*`);
+            const match = source.match(regex);
+            
+            if (!match) return null;
+            
+            const startIndex = match.index + match[0].length;
+            const openBraceIndex = source.indexOf('{', startIndex);
+            if (openBraceIndex === -1) return null;
+            
+            let balance = 0;
+            let inString = false;
+            let stringChar = '';
+            let isEscaped = false;
+            let foundEnd = false;
+            let endIndex = -1;
+            
+            // Bracket counting to find the end of the object
+            for (let i = openBraceIndex; i < source.length; i++) {
+                const char = source[i];
+                if (inString) {
+                    if (isEscaped) isEscaped = false;
+                    else if (char === '\\') isEscaped = true;
+                    else if (char === stringChar) inString = false;
+                } else {
+                    if (char === '"' || char === "'" || char === '`') {
+                        inString = true;
+                        stringChar = char;
+                    } else if (char === '{') {
+                        balance++;
+                    } else if (char === '}') {
+                        balance--;
+                        if (balance === 0) {
+                            endIndex = i + 1;
+                            foundEnd = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (!foundEnd) return null;
+            
+            const objectString = source.substring(openBraceIndex, endIndex);
+            
+            // Prepare context for the function (keys as arg names, values as args)
+            const ctxKeys = Object.keys(context);
+            const ctxValues = Object.values(context);
+            
+            try {
+                // Create a function that accepts the context variables as arguments
+                // e.g. new Function("xin", "me", "return { ... }")(xinObj, meObj)
+                const fn = new Function(...ctxKeys, "return " + objectString);
+                return fn(...ctxValues);
+            } catch (e) {
+                console.warn(`Initial parse of ${varName} failed, retrying with raw evaluation...`, e);
+                // Last resort: simple eval if context injection failed (risky but effective for simple objects)
+                try {
+                    return eval("(" + objectString + ")");
+                } catch (e2) {
+                    console.error(`Failed to parse ${varName}:`, e2);
+                    return null;
+                }
+            }
+        }
+
+        // IMPROVED: Data Extraction Logic
         async function extractScenesData() {
             try {
                 console.log("開始從 index.html 提取資料...");
                 
-                // 嘗試直接讀取 index.html 檔案
+                // Check for file protocol
+                if (window.location.protocol === 'file:') {
+                    console.warn("正在使用 file:// 協議，fetch 可能會被瀏覽器阻擋。");
+                }
+
                 const response = await fetch('index.html');
                 if (!response.ok) {
-                    throw new Error(`無法載入 index.html: ${response.status}`);
+                    throw new Error(`無法載入 index.html (Status: ${response.status})`);
                 }
                 
                 const htmlText = await response.text();
                 console.log("成功載入 index.html，開始解析...");
                 
-                // 使用正則表達式提取 SCENES 物件
-                const scenesMatch = htmlText.match(/const SCENES = (\{[\s\S]*?\});/);
-                if (!scenesMatch) {
-                    throw new Error("無法在 index.html 中找到 SCENES 物件");
-                }
+                // 1. First, try to extract CHARS if it exists
+                let extractedChars = extractVariableObject(htmlText, 'CHARS') || {};
                 
-                // 使用 Function 構造函數安全地解析物件
-                const scenesString = scenesMatch[1]
-                    .replace(/(\w+):/g, '"$1":')  // 將鍵名加上引號
-                    .replace(/,\s*(\}|])/g, '$1')  // 移除尾隨逗號
-                    .replace(/\/\*[\s\S]*?\*\//g, '')  // 移除多行註釋
-                    .replace(/\/\/.*$/gm, '');  // 移除單行註釋
+                // 2. Build a Context Object with known character variable names
+                // This mimics the variables likely defined in your index.html
+                const dependencyContext = {
+                    ...extractedChars, // Include anything found in CHARS
+                    // Fallback definitions for common variable names used in this script style
+                    xin: { name: "辛棄疾" },
+                    me: { name: "我" },
+                    ye: { name: "葉知秋" },
+                    lady: { name: "貴婦" },
+                    teacher: { name: "老師" },
+                    uxin: { name: "？？？" },
+                    CHARS: extractedChars // Self-reference just in case
+                };
+
+                // 3. Extract SCENES, injecting the known variables
+                SCENES = extractVariableObject(htmlText, 'SCENES', dependencyContext);
+                CHARS = extractedChars;
+                IMAGES = extractVariableObject(htmlText, 'IMAGES') || {};
                 
-                try {
-                    SCENES = JSON.parse(scenesString);
-                    console.log("成功解析 SCENES 物件，共找到", Object.keys(SCENES).length, "個場景");
-                } catch (e) {
-                    console.error("解析 SCENES 失敗，嘗試替代方法:", e);
-                    // 替代方法：使用 eval（僅限受信任的來源）
-                    SCENES = eval('(' + scenesMatch[1] + ')');
+                if (!SCENES || Object.keys(SCENES).length === 0) {
+                    throw new Error("無法解析 SCENES 物件。請檢查 index.html 變數定義格式。");
                 }
-                
-                // 提取 CHARS 物件
-                const charsMatch = htmlText.match(/const CHARS = (\{[\s\S]*?\});/);
-                if (charsMatch) {
-                    const charsString = charsMatch[1]
-                        .replace(/(\w+):/g, '"$1":')
-                        .replace(/,\s*(\}|])/g, '$1')
-                        .replace(/\/\*[\s\S]*?\*\//g, '')
-                        .replace(/\/\/.*$/gm, '');
-                    
-                    try {
-                        CHARS = JSON.parse(charsString);
-                        console.log("成功解析 CHARS 物件");
-                    } catch (e) {
-                        console.error("解析 CHARS 失敗:", e);
-                        CHARS = {};
-                    }
-                }
-                
-                // 提取 IMAGES 物件
-                const imagesMatch = htmlText.match(/const IMAGES = (\{[\s\S]*?\});/);
-                if (imagesMatch) {
-                    const imagesString = imagesMatch[1]
-                        .replace(/(\w+):/g, '"$1":')
-                        .replace(/,\s*(\}|])/g, '$1')
-                        .replace(/\/\*[\s\S]*?\*\//g, '')
-                        .replace(/\/\/.*$/gm, '');
-                    
-                    try {
-                        IMAGES = JSON.parse(imagesString);
-                        console.log("成功解析 IMAGES 物件");
-                    } catch (e) {
-                        console.error("解析 IMAGES 失敗:", e);
-                        IMAGES = {};
-                    }
-                }
+
+                console.log("成功解析 SCENES，共", Object.keys(SCENES).length, "個場景");
                 
                 allScenesLoaded = true;
                 updateLastUpdateTime();
@@ -270,11 +295,14 @@
                 
             } catch (error) {
                 console.error("提取資料時發生錯誤:", error);
+                let errorMsg = error.message;
+                if (window.location.protocol === 'file:' && !errorMsg.includes("SCENES")) {
+                    errorMsg = "瀏覽器安全策略阻止了本地檔案讀取 (CORS 錯誤)。<br>請使用 VS Code Live Server 或 Python 伺服器。";
+                }
                 document.getElementById('loading-message').innerHTML = 
-                    `<div class="bg-red-900/30 border border-red-700 rounded-lg p-6">
+                    `<div class="bg-red-900/30 border border-red-700 rounded-lg p-6 max-w-2xl mx-auto">
                         <h3 class="text-xl text-red-300 font-bold mb-2">載入失敗</h3>
-                        <p class="text-red-400">無法從 index.html 載入劇情資料：${error.message}</p>
-                        <p class="text-gray-400 text-sm mt-3">請確保 index.html 與 scenes.html 在同一目錄下，且瀏覽器允許載入本地資源。</p>
+                        <p class="text-red-400">${errorMsg}</p>
                     </div>`;
             }
         }
@@ -314,7 +342,7 @@
                 // 添加到導航
                 const navLink = document.createElement('a');
                 navLink.href = `#scene-${sceneId}`;
-                navLink.className = 'bg-gray-800 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition';
+                navLink.className = 'bg-gray-800 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition border border-gray-700';
                 navLink.textContent = sceneId;
                 sceneNavigation.appendChild(navLink);
                 
@@ -332,44 +360,51 @@
                 
                 // 場景標題
                 const sceneHeader = document.createElement('div');
-                sceneHeader.className = 'p-4 border-b border-gray-700 flex justify-between items-center';
+                sceneHeader.className = 'p-4 border-b border-gray-700 flex justify-between items-center cursor-pointer hover:bg-white/5 transition';
                 
+                const sceneTitleText = getSceneTitle(sceneId);
                 const sceneTitle = document.createElement('div');
                 sceneTitle.innerHTML = `
-                    <span class="scene-id-badge">${sceneId}</span>
-                    <span class="ml-3 font-bold text-lg text-white">${getSceneTitle(sceneId)}</span>
+                    <span class="scene-id-badge mr-2">${sceneId}</span>
+                    <span class="font-bold text-lg text-white">${sceneTitleText}</span>
                 `;
                 
                 // 下一個場景資訊
                 let nextInfo = '';
                 if (SCENES[sceneId].next) {
                     if (typeof SCENES[sceneId].next === 'function') {
-                        nextInfo = '<span class="next-scene">動態分支函數</span>';
+                        nextInfo = '<span class="next-scene border border-green-800">動態分支函數</span>';
                     } else {
-                        nextInfo = `<a href="#scene-${SCENES[sceneId].next}" class="next-scene jump-link">→ ${SCENES[sceneId].next}</a>`;
+                        nextInfo = `<a href="#scene-${SCENES[sceneId].next}" class="next-scene jump-link border border-green-800">→ ${SCENES[sceneId].next}</a>`;
                     }
                 } else if (SCENES[sceneId].choices) {
-                    nextInfo = `<span class="next-scene">${SCENES[sceneId].choices.length} 個分支選擇</span>`;
+                    nextInfo = `<span class="next-scene border border-green-800">${SCENES[sceneId].choices.length} 個分支選擇</span>`;
                 } else if (SCENES[sceneId].gameType) {
-                    nextInfo = `<span class="next-scene">小遊戲: ${SCENES[sceneId].gameType}</span>`;
+                    nextInfo = `<span class="next-scene border border-green-800">小遊戲: ${SCENES[sceneId].gameType}</span>`;
+                } else {
+                    nextInfo = `<span class="next-scene border border-gray-600 bg-gray-700 text-gray-400">結束/無後續</span>`;
                 }
                 
                 const sceneNext = document.createElement('div');
-                sceneNext.className = 'text-sm';
-                sceneNext.innerHTML = `<span class="text-gray-400">下一個: </span>${nextInfo}`;
+                sceneNext.className = 'text-sm hidden sm:block';
+                sceneNext.innerHTML = `<span class="text-gray-400">Next: </span>${nextInfo}`;
                 
                 sceneHeader.appendChild(sceneTitle);
                 sceneHeader.appendChild(sceneNext);
                 
-                // 場景內容
+                // 場景內容容器
                 const sceneContent = document.createElement('div');
                 sceneContent.className = 'p-1';
                 
                 // 顯示背景圖片資訊
                 if (SCENES[sceneId].bg) {
                     const bgInfo = document.createElement('div');
-                    bgInfo.className = 'p-3 bg-gray-900/50 m-3 rounded text-sm';
-                    bgInfo.innerHTML = `<span class="text-gray-400">背景圖片: </span><span class="text-amber-200">${getImageName(SCENES[sceneId].bg)}</span>`;
+                    bgInfo.className = 'p-2 px-4 bg-gray-900/50 m-2 rounded text-sm flex items-center gap-2';
+                    bgInfo.innerHTML = `
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <span class="text-gray-400">背景: </span>
+                        <span class="text-amber-200 font-mono">${getImageName(SCENES[sceneId].bg)}</span>
+                    `;
                     sceneContent.appendChild(bgInfo);
                 }
                 
@@ -383,33 +418,32 @@
                         let charName = '旁白';
                         let charClass = 'character-narrator';
                         
-                        if (line.char && line.char.name) {
-                            charName = line.char.name;
-                            // 根據角色設置樣式
-                            if (charName.includes('辛棄疾') || charName === '辛棄疾') {
-                                charClass = 'character-xin';
-                            } else if (charName === '我') {
-                                charClass = 'character-me';
-                            } else if (charName === '葉知秋') {
-                                charClass = 'character-ye';
-                            } else if (charName === '貴婦') {
-                                charClass = 'character-lady';
-                            } else if (charName === '老師') {
-                                charClass = 'character-teacher';
-                            } else if (charName === '？？？') {
-                                charClass = 'character-uxin';
+                        if (line.char) {
+                            // 處理 char 是物件或字串的情況
+                            if (typeof line.char === 'string') {
+                                charName = line.char;
+                            } else if (line.char.name) {
+                                charName = line.char.name;
                             }
+                            
+                            // 根據角色設置樣式
+                            if (charName.includes('辛棄疾')) charClass = 'character-xin';
+                            else if (charName === '我') charClass = 'character-me';
+                            else if (charName === '葉知秋') charClass = 'character-ye';
+                            else if (charName === '貴婦') charClass = 'character-lady';
+                            else if (charName === '老師') charClass = 'character-teacher';
+                            else if (charName === '？？？') charClass = 'character-uxin';
                         }
                         
                         lineDiv.innerHTML = `
-                            <div class="flex">
-                                <div class="w-24 flex-shrink-0">
-                                    <span class="${charClass} font-medium">${charName}</span>
+                            <div class="flex w-full">
+                                <div class="w-24 flex-shrink-0 pt-1">
+                                    <span class="${charClass} font-medium text-sm block truncate pr-2">${charName}</span>
                                 </div>
                                 <div class="flex-grow">
-                                    <span class="text-gray-300">${escapeHtml(line.text)}</span>
+                                    <span class="text-gray-300 dialogue-text">${escapeHtml(line.text)}</span>
                                 </div>
-                                <div class="w-10 text-right text-gray-500 text-sm">
+                                <div class="w-8 text-right text-gray-600 text-xs pt-1 select-none">
                                     ${index + 1}
                                 </div>
                             </div>
@@ -419,7 +453,7 @@
                     });
                 } else {
                     const noScriptDiv = document.createElement('div');
-                    noScriptDiv.className = 'p-4 text-center text-gray-500';
+                    noScriptDiv.className = 'p-4 text-center text-gray-500 italic';
                     noScriptDiv.textContent = '此場景無對話內容';
                     sceneContent.appendChild(noScriptDiv);
                 }
@@ -427,8 +461,8 @@
                 // 顯示選擇選項
                 if (SCENES[sceneId].choices && SCENES[sceneId].choices.length > 0) {
                     const choicesHeader = document.createElement('div');
-                    choicesHeader.className = 'p-3 bg-gray-900/70 m-3 rounded font-bold text-amber-200';
-                    choicesHeader.textContent = '玩家選擇';
+                    choicesHeader.className = 'p-2 mx-3 mt-4 mb-2 border-b border-gray-700 font-bold text-amber-200 text-sm uppercase tracking-wider';
+                    choicesHeader.textContent = '分支選項';
                     sceneContent.appendChild(choicesHeader);
                     
                     SCENES[sceneId].choices.forEach((choice, index) => {
@@ -438,17 +472,17 @@
                         let targetInfo = '';
                         if (choice.target) {
                             if (typeof choice.target === 'function') {
-                                targetInfo = '<span class="text-purple-400 text-sm ml-2">[動態分支]</span>';
+                                targetInfo = '<span class="text-purple-400 text-sm ml-2">[動態計算]</span>';
                             } else {
-                                targetInfo = `<a href="#scene-${choice.target}" class="jump-link text-sm ml-2">→ ${choice.target}</a>`;
+                                targetInfo = `<a href="#scene-${choice.target}" class="jump-link text-sm ml-2 font-mono">→ ${choice.target}</a>`;
                             }
                         }
                         
                         choiceDiv.innerHTML = `
                             <div class="font-medium text-white">${index + 1}. ${escapeHtml(choice.text)}</div>
-                            <div class="text-sm text-gray-400 mt-1">
-                                目標場景: ${targetInfo}
-                                ${choice.weights ? `<span class="ml-3">權重: ${JSON.stringify(choice.weights)}</span>` : ''}
+                            <div class="text-sm text-gray-400 mt-1 flex gap-4">
+                                <span>目標: ${targetInfo}</span>
+                                ${choice.weights ? `<span>權重: <code class="bg-gray-800 px-1 rounded">${JSON.stringify(choice.weights)}</code></span>` : ''}
                             </div>
                         `;
                         
@@ -459,18 +493,18 @@
                 // 顯示小遊戲配置
                 if (SCENES[sceneId].gameType || SCENES[sceneId].config) {
                     const gameHeader = document.createElement('div');
-                    gameHeader.className = 'p-3 bg-gray-900/70 m-3 rounded font-bold text-purple-300';
-                    gameHeader.textContent = SCENES[sceneId].gameType ? `小遊戲: ${SCENES[sceneId].gameType}` : '小遊戲配置';
+                    gameHeader.className = 'p-2 mx-3 mt-4 mb-2 border-b border-gray-700 font-bold text-purple-300 text-sm uppercase tracking-wider';
+                    gameHeader.textContent = SCENES[sceneId].gameType ? `GAME: ${SCENES[sceneId].gameType}` : 'GAME CONFIG';
                     sceneContent.appendChild(gameHeader);
                     
                     if (SCENES[sceneId].config) {
                         const configDiv = document.createElement('div');
-                        configDiv.className = 'p-3 m-3 bg-gray-900/50 rounded text-sm';
+                        configDiv.className = 'p-3 m-3 bg-gray-900/50 rounded text-sm grid grid-cols-1 md:grid-cols-2 gap-2';
                         configDiv.innerHTML = `
                             <div><span class="text-gray-400">目標提示:</span> <span class="text-amber-200">${SCENES[sceneId].config.targetHint || '無'}</span></div>
                             <div><span class="text-gray-400">時間限制:</span> <span class="text-amber-200">${SCENES[sceneId].config.timeLimit || '無'} 秒</span></div>
-                            <div><span class="text-gray-400">成功後:</span> <a href="#scene-${SCENES[sceneId].config.nextPass}" class="jump-link">${SCENES[sceneId].config.nextPass}</a></div>
-                            <div><span class="text-gray-400">失敗後:</span> <a href="#scene-${SCENES[sceneId].config.nextFail}" class="jump-link">${SCENES[sceneId].config.nextFail}</a></div>
+                            <div><span class="text-gray-400">成功跳轉:</span> <a href="#scene-${SCENES[sceneId].config.nextPass}" class="jump-link font-mono">${SCENES[sceneId].config.nextPass}</a></div>
+                            <div><span class="text-gray-400">失敗跳轉:</span> <a href="#scene-${SCENES[sceneId].config.nextFail}" class="jump-link font-mono">${SCENES[sceneId].config.nextFail}</a></div>
                         `;
                         sceneContent.appendChild(configDiv);
                     }
@@ -493,13 +527,13 @@
         
         // 獲取場景標題
         function getSceneTitle(sceneId) {
-            const scene = SCENES[sceneId];
+            // 自定義標題映射
             if (sceneId === 'start') return '序幕：現代課堂';
             if (sceneId === 'flow') return '穿越：抵達南宋';
-            if (sceneId.includes('market')) return '場景：市集初遇';
-            if (sceneId.includes('ye')) return '場景：繁華夜市';
-            if (sceneId.includes('discover')) return '小遊戲：尋找繁華跡象';
-            if (sceneId.includes('restaurant')) return '場景：酒樓重逢';
+            if (sceneId.includes('market')) return '市集初遇';
+            if (sceneId.includes('ye')) return '繁華夜市';
+            if (sceneId.includes('discover')) return '小遊戲：尋找繁華';
+            if (sceneId.includes('restaurant')) return '酒樓重逢';
             if (sceneId.includes('temptation')) return '小遊戲：拒絕誘惑';
             if (sceneId.includes('see_women')) return '高潮：眾裡尋他';
             if (sceneId.includes('wakeup')) return '結局：夢醒時分';
@@ -513,19 +547,21 @@
         function getImageName(url) {
             if (!url) return '無';
             
-            // 從 URL 中提取圖片名稱
-            const urlObj = new URL(url);
-            const pathname = urlObj.pathname;
-            const filename = pathname.split('/').pop();
-            
-            // 從 IMAGES 物件中查找對應的鍵名
-            for (const [key, value] of Object.entries(IMAGES)) {
-                if (value === url) {
-                    return `${key}: ${filename}`;
+            // 嘗試解析 URL，如果是相對路徑則直接處理
+            try {
+                // 如果是完整的 URL
+                if (url.startsWith('http') || url.startsWith('data:')) {
+                    const urlObj = new URL(url);
+                    return urlObj.pathname.split('/').pop();
+                } 
+                // 相對路徑
+                else {
+                    const parts = url.split('/');
+                    return parts[parts.length - 1];
                 }
+            } catch (e) {
+                return url;
             }
-            
-            return filename;
         }
         
         // HTML 轉義
@@ -543,69 +579,97 @@
             searchInput.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase().trim();
                 const sceneCards = document.querySelectorAll('.scene-card');
-                const dialogueLines = document.querySelectorAll('.dialogue-line');
                 
                 if (searchTerm === '') {
-                    // 顯示所有內容
-                    sceneCards.forEach(card => card.style.display = 'block');
-                    dialogueLines.forEach(line => line.style.display = 'flex');
+                    // 恢復所有內容顯示
+                    sceneCards.forEach(card => {
+                        card.style.display = 'block';
+                        // 恢復對話行顯示
+                        const lines = card.querySelectorAll('.dialogue-line');
+                        lines.forEach(line => {
+                            line.style.display = 'flex';
+                            line.style.backgroundColor = '';
+                            const textSpan = line.querySelector('.dialogue-text');
+                            if(textSpan) textSpan.innerHTML = textSpan.textContent; // 清除高亮
+                        });
+                    });
                     return;
                 }
                 
-                // 先隱藏所有場景卡片
-                sceneCards.forEach(card => card.style.display = 'none');
-                
-                // 搜尋場景ID和標題
+                // 搜尋邏輯
                 sceneCards.forEach(card => {
                     const sceneId = card.id.replace('scene-', '');
                     const sceneTitle = getSceneTitle(sceneId);
                     
-                    if (sceneId.toLowerCase().includes(searchTerm) || 
-                        sceneTitle.toLowerCase().includes(searchTerm)) {
-                        card.style.display = 'block';
+                    // 檢查標題是否匹配
+                    const titleMatch = sceneId.toLowerCase().includes(searchTerm) || 
+                                     sceneTitle.toLowerCase().includes(searchTerm);
+                    
+                    let contentMatch = false;
+                    const lines = card.querySelectorAll('.dialogue-line');
+                    
+                    // 檢查每一行對話
+                    lines.forEach(line => {
+                        const textSpan = line.querySelector('.dialogue-text');
+                        if (!textSpan) return;
                         
-                        // 在該場景中高亮搜尋詞
-                        const lines = card.querySelectorAll('.dialogue-line');
-                        lines.forEach(line => {
-                            const lineText = line.textContent.toLowerCase();
-                            if (lineText.includes(searchTerm)) {
+                        const originalText = textSpan.textContent;
+                        const lineText = originalText.toLowerCase();
+                        
+                        if (lineText.includes(searchTerm)) {
+                            contentMatch = true;
+                            line.style.display = 'flex';
+                            line.style.backgroundColor = 'rgba(255, 179, 0, 0.1)';
+                            
+                            // 高亮文本
+                            const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                            textSpan.innerHTML = originalText.replace(regex, '<mark>$1</mark>');
+                        } else {
+                            // 如果標題匹配，則顯示所有行（不高亮），否則隱藏
+                            if (titleMatch) {
                                 line.style.display = 'flex';
-                                line.style.backgroundColor = 'rgba(255, 179, 0, 0.1)';
-                                
-                                // 高亮文本
-                                const textSpan = line.querySelector('.text-gray-300');
-                                if (textSpan) {
-                                    const originalText = textSpan.textContent;
-                                    const regex = new RegExp(`(${searchTerm})`, 'gi');
-                                    const highlighted = originalText.replace(regex, '<mark class="bg-amber-500/30 text-amber-200">$1</mark>');
-                                    textSpan.innerHTML = highlighted;
-                                }
+                                line.style.backgroundColor = '';
+                                textSpan.innerHTML = originalText;
                             } else {
                                 line.style.display = 'none';
+                                textSpan.innerHTML = originalText;
                             }
-                        });
+                        }
+                    });
+                    
+                    // 決定卡片是否顯示
+                    if (titleMatch || contentMatch) {
+                        card.style.display = 'block';
+                        // 如果是因為內容匹配而顯示，展開卡片
+                        if (contentMatch) {
+                            const content = card.querySelector('.scene-card > div:last-child');
+                            if(content) content.style.display = 'block';
+                        }
+                    } else {
+                        card.style.display = 'none';
                     }
                 });
             });
             
             // 展開/收合所有場景
-            document.getElementById('toggle-all').addEventListener('click', function() {
+            const toggleBtn = document.getElementById('toggle-all');
+            toggleBtn.addEventListener('click', function() {
+                isExpanded = !isExpanded;
                 const sceneContents = document.querySelectorAll('.scene-card > div:last-child');
-                const isHidden = sceneContents[0]?.style.display === 'none';
                 
                 sceneContents.forEach(content => {
-                    content.style.display = isHidden ? 'block' : 'none';
+                    content.style.display = isExpanded ? 'block' : 'none';
                 });
                 
-                this.textContent = isHidden ? '收合所有' : '展開所有';
+                this.textContent = isExpanded ? '收合所有' : '展開所有';
             });
             
             // 點擊場景標題展開/收合內容
             document.querySelectorAll('.scene-card > div:first-child').forEach(header => {
-                header.style.cursor = 'pointer';
                 header.addEventListener('click', function() {
                     const content = this.nextElementSibling;
-                    content.style.display = content.style.display === 'none' ? 'block' : 'none';
+                    const isHidden = content.style.display === 'none';
+                    content.style.display = isHidden ? 'block' : 'none';
                 });
             });
         }
@@ -619,7 +683,7 @@
                 console.log("定期檢查劇情更新...");
                 extractScenesData();
             }
-        }, 5 * 60 * 1000);
+        }, 300 * 1000);
     </script>
 </body>
 </html>
