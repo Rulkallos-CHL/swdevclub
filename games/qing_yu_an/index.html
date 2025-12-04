@@ -102,7 +102,7 @@
             align-items: center;
             gap: 10px;
             backdrop-filter: blur(2px);
-            visibility: hidden;
+            visibility: hidden; /* 預設隱藏，避免空盒子 */
         }
 
         #character-name {
@@ -384,6 +384,95 @@
             filter: brightness(0.85) drop-shadow(0 0 10px rgba(0,0,0,0.3));
         }
 
+        /* --- Control Bar (NEW) --- */
+        #control-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            padding: 10px 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 20;
+        }
+
+        .control-btn {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #555;
+            color: #888;
+            padding: 5px 15px;
+            font-family: 'Noto Serif TC', serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .control-btn:hover {
+            color: #ffb300;
+            border-color: #ffb300;
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        .control-btn.active {
+            color: #000;
+            background: #ffb300;
+            border-color: #ffb300;
+            box-shadow: 0 0 10px #ffb300;
+        }
+
+        /* --- History Overlay (NEW) --- */
+        #history-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        #history-container {
+            width: 80%;
+            height: 80%;
+            background: rgba(20, 20, 20, 0.95);
+            border: 1px solid #444;
+            padding: 30px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #history-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #ccc;
+        }
+
+        /* Scrollbar styling */
+        #history-content::-webkit-scrollbar { width: 8px; }
+        #history-content::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+        #history-content::-webkit-scrollbar-track { background: #111; }
+
+        .history-entry { margin-bottom: 15px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .history-name { color: #ffb300; font-weight: bold; margin-right: 10px; font-size: 1rem; }
+        .history-text { color: #e0e0e0; }
+
+        .close-history {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+        .close-history:hover { color: #fff; }
+
         /* 響應式調整 */
         @media (max-width: 1024px) {
             #character-portraits {
@@ -476,22 +565,45 @@
 
         <div id="particles" style="position:absolute; inset:0; pointer-events:none;"></div>
 
-        <div id="dialogue-layer" style="display: none;" onclick="handleDialogueClick()">
-            <div id="character-name-box">
-                <span id="character-name"></span>
-            </div>
-            <div id="dialogue-text"></div>
-            <div class="next-indicator" id="next-indicator"></div>
-        </div>
-
         <div id="choices-container" style="display: none;"></div>
 
         <div id="minigame-overlay"></div>
+
+        <div id="dialogue-layer" style="display: none;" onclick="handleDialogueClick()">
+            <div id="character-name-box">
+                <span id="character-name"></span>
+                <span class="char-tag"></span>
+            </div>
+            
+            <div id="dialogue-text"></div>
+            
+            <div class="next-indicator" id="next-indicator"></div>
+
+            <div id="control-bar" onclick="event.stopPropagation()">
+                <button class="control-btn" onclick="toggleHistory(event)">紀錄</button>
+                <button class="control-btn" id="btn-auto" onclick="toggleAuto(event)">自動</button>
+                <button class="control-btn" onclick="confirmQuit(event)">退出</button>
+            </div>
+        </div>
+
+        <div id="history-overlay" style="display: none;" onclick="toggleHistory(event)">
+            <div id="history-container" onclick="event.stopPropagation()">
+                <h2 style="color: #ffb300; border-bottom: 1px solid #555; padding-bottom: 10px; margin-bottom: 15px;">劇情紀錄</h2>
+                <div id="history-content"></div>
+                <button class="close-history" onclick="toggleHistory(event)">×</button>
+            </div>
+        </div>
+    </div>
 
 <script>
         // ==================== 全局變數初始化 ====================
         let characterLastAppearance = {};  // 集中管理角色出場追蹤
         let activePortraits = { left: null, right: null };  // 統一管理立繪狀態
+        
+        // [FEATURE] New Globals
+        let historyLog = [];
+        let autoTimer = null;
+        let isAuto = false;
 
         // --- 手機視窗高度修正 ---
         function setVh() {
@@ -563,18 +675,6 @@
             }
         };
 
-        let state = {
-            scene: 'start',
-            index: 0,
-            bgSlot: 1,
-            isTyping: false,
-            weights: {
-                awakening: 0,
-                favor: 0
-            }
-        };
-
-        // --- 劇情數據 ---
         const SCENES = {
             // ============================================================
             //  第一章：序幕 & 穿越
@@ -1229,19 +1329,16 @@
         // 在遊戲開始前預加載立繪圖片
         function preloadPortraits() {
             const portraitUrls = [];
-            
             Object.values(CHARS).forEach(char => {
                 if (char.portrait) {
                     portraitUrls.push(char.portrait);
                 }
             });
-            
             portraitUrls.forEach(url => {
                 const img = new Image();
                 img.src = url;
             });
         }
-
         // 在頁面加載完成後調用
         window.addEventListener('DOMContentLoaded', preloadPortraits);
 
@@ -1261,126 +1358,225 @@
             setTimeout(() => {
                 // 隱藏標題畫面
                 document.getElementById('title-screen').style.display = 'none';
+                
                 clearPortraits();
                 resetCharacterTracking();
-                
+
                 // 執行原本的場景初始化邏輯
                 const bg1 = document.getElementById('scene-bg-1');
                 bg1.style.backgroundImage = `url('${SCENES['start'].bg}')`;
                 bg1.classList.add('active');
-                
+
+                document.getElementById('dialogue-layer').style.display = 'flex';
+                state.bgSlot = 1;
                 loadScene('start');
 
-                // 5. 場景載入後，再延遲一點點，讓遮罩淡出
-                setTimeout(() => {
-                    mask.classList.remove('active');
-                }, 800);
+                // 5. 場景加載好後，讓畫面變亮 (移除 active)
+                mask.classList.remove('active');
 
             }, 1800);
         }
 
-        function updateCharacterPortrait(char, isSpeaking = true) {
-            const portraitsContainer = document.getElementById('character-portraits');
+        // 狀態變數
+        let state = {
+            scene: 'start',
+            index: 0,
+            bgSlot: 1,
+            isTyping: false,
+            weights: {
+                awakening: 0, 
+                favor: 0 
+            },
+            isAuto: false // Keep consistent with global
+        };
+
+        // ==================== NEW FEATURE LOGIC ====================
+
+        function toggleHistory(e) {
+            if (e) e.stopPropagation();
+            const overlay = document.getElementById('history-overlay');
+            const content = document.getElementById('history-content');
             
-            // 如果是旁白，隱藏所有立繪
-            if (char === CHARS.NARRATOR || !char.portrait) {
-                hideAllPortraits();
-                return;
+            if (overlay.style.display === 'none' || overlay.style.display === '') {
+                // Show History
+                overlay.style.display = 'flex';
+                // Render
+                content.innerHTML = historyLog.map(entry => `
+                    <div class="history-entry">
+                        <span class="history-name">${entry.name}</span>
+                        <span class="history-text">${entry.text}</span>
+                    </div>
+                `).join('');
+                // Scroll to bottom
+                content.scrollTop = content.scrollHeight;
+            } else {
+                // Hide History
+                overlay.style.display = 'none';
             }
-            
-            // 確定顯示側
-            const side = char.side || "left";
-            const oppositeSide = side === "left" ? "right" : "left";
-            
-            // 獲取對應的插槽
-            const slot = portraitsContainer.querySelector(`.portrait-slot[data-side="${side}"]`);
-            
-            // 如果這個角色已經在顯示，只更新 speaking 狀態
-            if (activePortraits[side] === char.name) {
-                updateSpeakingState(side, isSpeaking);
-                return;
-            }
-            
-            // 否則，創建新的立繪
-            activePortraits[side] = char.name;
-            
-            // 清除該側的舊立繪
-            const oldPortrait = slot.querySelector('.character-illustration');
-            if (oldPortrait) {
-                oldPortrait.classList.remove('active', 'speaking');
-                oldPortrait.classList.add('fading');
-                setTimeout(() => oldPortrait.remove(), 500);
-            }
-            
-            // 對側立繪淡出效果
-            const oppositeSlot = portraitsContainer.querySelector(`.portrait-slot[data-side="${oppositeSide}"]`);
-            const oppositePortrait = oppositeSlot.querySelector('.character-illustration');
-            if (oppositePortrait && activePortraits[oppositeSide] !== char.name) {
-                oppositePortrait.classList.remove('speaking');
-                oppositePortrait.classList.add('fading');
-            }
-            
-            // 創建新的立繪元素
-            const portraitImg = document.createElement('img');
-            portraitImg.className = 'character-illustration';
-            portraitImg.alt = `${char.name} 立繪`;
-            portraitImg.dataset.character = char.name;
-            
-            // 圖片加載完成後顯示
-            portraitImg.onload = () => {
-                setTimeout(() => {
-                    portraitImg.classList.add('active');
-                    if (isSpeaking) {
-                        portraitImg.classList.add('speaking');
-                    }
-                }, 50);
-            };
-            
-            portraitImg.onerror = () => {
-                console.warn(`無法加載立繪: ${char.portrait}`);
-                portraitImg.remove();
-                activePortraits[side] = null;
-            };
-            
-            portraitImg.src = char.portrait;
-            slot.appendChild(portraitImg);
         }
 
-        function updateSpeakingState(side, isSpeaking) {
-            const portraitsContainer = document.getElementById('character-portraits');
-            const slot = portraitsContainer.querySelector(`.portrait-slot[data-side="${side}"]`);
-            const portrait = slot.querySelector('.character-illustration');
+        function toggleAuto(e) {
+            if (e) e.stopPropagation();
+            state.isAuto = !state.isAuto; // Toggle State
             
-            if (portrait) {
-                if (isSpeaking) {
-                    portrait.classList.add('speaking');
-                    portrait.classList.remove('fading');
-                } else {
-                    portrait.classList.remove('speaking');
-                    portrait.classList.add('fading');
+            const btn = document.getElementById('btn-auto');
+            if (state.isAuto) {
+                btn.classList.add('active');
+                // If text is already finished, trigger the advance immediately
+                if (!state.isTyping && document.getElementById('next-indicator').style.display !== 'none') {
+                    handleDialogueClick();
                 }
+            } else {
+                btn.classList.remove('active');
+                if (autoTimer) clearTimeout(autoTimer);
             }
         }
 
-        function hideAllPortraits() {
-            const portraits = document.querySelectorAll('.character-illustration');
-            portraits.forEach(portrait => {
-                portrait.classList.remove('active', 'speaking');
-                portrait.classList.add('fading');
-            });
+        function confirmQuit(e) {
+            if (e) e.stopPropagation();
             
+            // Pause Auto if active
+            if (state.isAuto) toggleAuto();
+
+            if (confirm("確定要返回標題畫面嗎？\n未保存的進度將會丟失。")) {
+                loadScene('title');
+            }
+        }
+
+        function addToHistory(line) {
+            // Prevent duplicate consecutive entries
+            if (historyLog.length > 0) {
+                const last = historyLog[historyLog.length - 1];
+                const currentName = line.char ? line.char.name : '';
+                if (last.text === line.text && last.name === currentName) return;
+            }
+
+            const entry = {
+                name: line.char ? line.char.name : '',
+                text: line.text
+            };
+            historyLog.push(entry);
+
+            // [FIX] Live Update: If history is open, append the new line immediately
+            const overlay = document.getElementById('history-overlay');
+            if (overlay.style.display !== 'none') {
+                const content = document.getElementById('history-content');
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'history-entry';
+                entryDiv.innerHTML = `
+                    <span class="history-name">${entry.name}</span>
+                    <span class="history-text">${entry.text}</span>
+                `;
+                content.appendChild(entryDiv);
+                // Auto-scroll to bottom to follow the new text
+                content.scrollTop = content.scrollHeight;
+            }
+        }
+
+        // ==================== LOGIC ====================
+
+        function finishType() {
+            state.isTyping = false;
+            document.getElementById('next-indicator').style.display = 'block';
+
+            // [FEATURE] Add to History Log
+            const scene = SCENES[state.scene];
+            if (scene && scene.script && scene.script[state.index]) {
+                addToHistory(scene.script[state.index]);
+            }
+
+            // [FEATURE] Auto Play Logic
+            if (state.isAuto) {
+                if (autoTimer) clearTimeout(autoTimer);
+                // Wait 0.5s before advancing
+                autoTimer = setTimeout(() => {
+                    // Check if still auto (user might have cancelled in the split second)
+                    if (state.isAuto) {
+                        handleDialogueClick();
+                    }
+                }, 1000);
+            }
+        }
+
+        function handleDialogueClick() {
+            // If user manually clicks, stop the pending auto timer
+            if (autoTimer) clearTimeout(autoTimer);
+
+            const scene = SCENES[state.scene];
+            if (!scene || !scene.script) return;
+            
+            // Don't advance if choices are visible
+            if (document.getElementById('choices-container').style.display !== 'none') return;
+
+            if (state.isTyping) {
+                // If typing, skip to end
+                state.isTyping = false;
+            } else {
+                // Next line
+                state.index++;
+                renderDialogue();
+            }
+        }
+
+        function renderChoices(choices) {
+            // [UX CHANGE] Do NOT turn off Auto, just ensure no pending timer exists
+            if (autoTimer) clearTimeout(autoTimer);
+
+            const container = document.getElementById('choices-container');
+            container.innerHTML = '';
+            container.style.display = 'flex';
+            hideAllPortraits();
+
+            choices.forEach(choice => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn';
+                btn.textContent = choice.text;
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    
+                    // Weight Logic
+                    if (choice.weights) {
+                        for (let key in choice.weights) {
+                            if (state.weights.hasOwnProperty(key)) {
+                                state.weights[key] += choice.weights[key];
+                            }
+                        }
+                    }
+
+                    container.style.display = 'none';
+                    
+                    // Navigation Logic
+                    let nextScene = choice.target;
+                    if (!nextScene) {
+                        // If no target, just advance index (simple branch merge)
+                        state.index++;
+                        renderDialogue();
+                    } else {
+                        loadScene(nextScene);
+                    }
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        // 清除所有立繪
+        function clearPortraits() {
+            const portraitsContainer = document.getElementById('character-portraits');
+            portraitsContainer.querySelectorAll('.portrait-slot').forEach(slot => {
+                slot.innerHTML = '';
+            });
             activePortraits.left = null;
             activePortraits.right = null;
         }
-
-        function clearPortraits() {
-            const portraits = document.querySelectorAll('.character-illustration');
-            portraits.forEach(portrait => {
-                portrait.remove();
-            });
-            
-            activePortraits.left = null;
-            activePortraits.right = null;
+        
+        // 隱藏所有立繪 (用於旁白或特殊場景)
+        function hideAllPortraits() {
+             const portraitsContainer = document.getElementById('character-portraits');
+             portraitsContainer.querySelectorAll('.character-illustration').forEach(img => {
+                 img.classList.remove('active');
+             });
+             activePortraits.left = null;
+             activePortraits.right = null;
         }
 
         // 分析場景，找出每個角色的最後出場位置
@@ -1388,10 +1584,8 @@
             const scene = SCENES[sceneId];
             if (!scene || !scene.script) return;
             
-            // 清空之前的記錄
             characterLastAppearance = {};
             
-            // 遍歷所有對話行，記錄每個角色的最後出現位置
             scene.script.forEach((line, index) => {
                 if (line.char && line.char.name) {
                     characterLastAppearance[line.char.name] = index;
@@ -1406,156 +1600,186 @@
 
         // 檢查是否需要完全淡化某個角色
         function checkForFinalFade(characterName, currentIndex) {
-            if (!characterName || !characterLastAppearance[characterName]) return false;
-            
-            // 如果當前索引等於或超過該角色的最後出場位置，則需要完全淡化
-            return currentIndex >= characterLastAppearance[characterName];
+             if (!characterName || !characterLastAppearance[characterName]) return false;
+             return currentIndex >= characterLastAppearance[characterName];
         }
 
         // 更新立繪顯示，處理完全淡化
         function updateCharacterPortraitWithFade(char, currentIndex) {
             const portraitsContainer = document.getElementById('character-portraits');
-            
-            // 如果是旁白，隱藏所有立繪
+
             if (char === CHARS.NARRATOR || !char.portrait) {
                 hideAllPortraits();
                 return;
             }
             
-            // 檢查是否需要完全淡化
             const shouldFadeCompletely = checkForFinalFade(char.name, currentIndex);
-            
-            // 確定顯示側
             const side = char.side || "left";
             const oppositeSide = side === "left" ? "right" : "left";
-            
-            // 獲取對應的插槽
+
             const slot = portraitsContainer.querySelector(`.portrait-slot[data-side="${side}"]`);
+            const oppositeSlot = portraitsContainer.querySelector(`.portrait-slot[data-side="${oppositeSide}"]`);
+
+            if (oppositeSlot) {
+                const oppositeImg = oppositeSlot.querySelector('.character-illustration');
+                if (oppositeImg) {
+                    oppositeImg.classList.remove('speaking');
+                    oppositeImg.classList.add('fading');
+                }
+            }
+
+            let currentImg = slot.querySelector('.character-illustration');
             
-            // 如果這個角色已經在顯示
-            if (activePortraits[side] === char.name) {
-                const portrait = slot.querySelector('.character-illustration');
-                if (portrait) {
-                    if (shouldFadeCompletely) {
-                        // 完全淡化（變為透明）
-                        portrait.style.opacity = '0';
-                        portrait.style.transition = 'opacity 1.2s ease';
-                        portrait.style.filter = 'brightness(0.5)';
-                        
-                        // 延遲後移除
-                        setTimeout(() => {
-                            if (portrait.parentNode) {
-                                portrait.remove();
-                                activePortraits[side] = null;
-                            }
-                        }, 1200);
-                    } else {
-                        // 正常高亮
-                        portrait.classList.add('speaking');
-                        portrait.classList.remove('fading');
+            if (!currentImg || currentImg.src !== char.portrait) {
+                slot.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = char.portrait;
+                img.className = 'character-illustration';
+                slot.appendChild(img);
+                void img.offsetWidth;
+                img.classList.add('active');
+                currentImg = img;
+            }
+
+            currentImg.classList.add('speaking');
+            currentImg.classList.remove('fading');
+            activePortraits[side] = char.name;
+        }
+
+        // [FIXED] renderDialogue: check for scene.choices at end
+        function renderDialogue() {
+            const scene = SCENES[state.scene];
+            if (!scene || !scene.script) return;
+
+            // Check for scene end
+            if (state.index >= scene.script.length) {
+                if (scene.choices) {
+                    renderChoices(scene.choices);
+                    return;
+                }
+                
+                if (scene.next) {
+                    loadScene(scene.next);
+                } else {
+                    const endMap = {
+                        'scene_wakeup_GOOD': { type: 'TRUE END', title: '燈火闌珊處' },
+                        'scene_wakeup_GOOD#1': { type: 'GOOD END', title: '我即那人' },
+                        'scene_wakeup_BAD#1': { type: 'BAD END', title: '黃粱一夢' },
+                        'scene_wakeup_BAD#3-1': { type: 'BAD END', title: '暖風熏得遊人醉' },
+                        'scene_wakeup_BAD#3-2': { type: 'BAD END', title: '醉生夢死' }
+                    };
+                    if (endMap[state.scene]) {
+                         showEnding(endMap[state.scene]);
                     }
                 }
                 return;
             }
-            
-            // 否則，創建新的立繪
-            activePortraits[side] = char.name;
-            
-            // 清除該側的舊立繪
-            const oldPortrait = slot.querySelector('.character-illustration');
-            if (oldPortrait) {
-                oldPortrait.classList.remove('active', 'speaking');
-                oldPortrait.classList.add('fading');
-                setTimeout(() => oldPortrait.remove(), 500);
+
+            const line = scene.script[state.index];
+            const nameBox = document.getElementById('character-name-box'); 
+            const nameEl = document.getElementById('character-name'); 
+            const tagEl = nameBox.querySelector('.char-tag');
+            const textEl = document.getElementById('dialogue-text');
+
+            if (line.char && line.char.name) {
+                nameEl.textContent = line.char.name;
+                tagEl.textContent = line.char.tag ? `（${line.char.tag}）` : '';
+                nameBox.style.visibility = 'visible';
+                nameBox.style.borderColor = line.char.color || '#ffb300';
+            } else {
+                nameBox.style.visibility = 'hidden';
             }
             
-            // 創建新的立繪元素
-            const portraitImg = document.createElement('img');
-            portraitImg.className = 'character-illustration';
-            portraitImg.alt = `${char.name} 立繪`;
-            portraitImg.dataset.character = char.name;
-            
-            // 如果應該完全淡化，設置初始透明度為0
-            if (shouldFadeCompletely) {
-                portraitImg.style.opacity = '0';
-                portraitImg.style.filter = 'brightness(0.5)';
+            if (line.char) {
+                updateCharacterPortraitWithFade(line.char, state.index);
+            }
+
+            if (line.choices) {
+                 renderChoices(line.choices);
+                 return; 
             }
             
-            // 圖片加載完成後顯示
-            portraitImg.onload = () => {
-                setTimeout(() => {
-                    portraitImg.classList.add('active');
-                    
-                    if (shouldFadeCompletely) {
-                        // 如果是完全淡化，保持透明
-                        portraitImg.style.opacity = '0';
-                    } else {
-                        // 正常顯示
-                        portraitImg.classList.add('speaking');
-                    }
-                }, 50);
-            };
-            
-            portraitImg.onerror = () => {
-                console.warn(`無法加載立繪: ${char.portrait}`);
-                portraitImg.remove();
-                activePortraits[side] = null;
-            };
-            
-            portraitImg.src = char.portrait;
-            slot.appendChild(portraitImg);
-            
-            // 對側立繪淡出效果
-            const oppositeSlot = portraitsContainer.querySelector(`.portrait-slot[data-side="${oppositeSide}"]`);
-            const oppositePortrait = oppositeSlot.querySelector('.character-illustration');
-            if (oppositePortrait && activePortraits[oppositeSide] !== char.name) {
-                oppositePortrait.classList.remove('speaking');
-                oppositePortrait.classList.add('fading');
+            textEl.innerHTML = '';
+            state.isTyping = true;
+            document.getElementById('next-indicator').style.display = 'none';
+            typeText(line.text, 0);
+        }
+
+        function typeText(text, charIndex) {
+            if (!state.isTyping) {
+                document.getElementById('dialogue-text').innerHTML = text;
+                finishType();
+                return;
+            }
+
+            if (charIndex < text.length) {
+                document.getElementById('dialogue-text').innerHTML += text.charAt(charIndex);
+                setTimeout(() => typeText(text, charIndex + 1), 30);
+            } else {
+                finishType();
             }
         }
 
+        // [UX CHANGE] loadScene: Minigames don't stop Auto
         function loadScene(sceneId) {
             try {
-                // --- NEW: Handle Return to Title Screen ---
                 if (sceneId === 'title') {
-                    // Show the title screen
                     document.getElementById('title-screen').style.display = 'flex';
                     
-                    // Hide game UI elements
                     document.getElementById('dialogue-layer').style.display = 'none';
                     document.getElementById('choices-container').style.display = 'none';
                     document.getElementById('minigame-overlay').style.display = 'none';
-                    return; // Stop here, do not process further
+                    document.getElementById('history-overlay').style.display = 'none';
+                    const endOverlay = document.getElementById('ending-overlay');
+                    if (endOverlay) endOverlay.remove();
+
+                    historyLog = []; 
+                    state.weights = { awakening: 0, favor: 0 };
+                    
+                    if (state.isAuto) toggleAuto(); 
+                    
+                    resetCharacterTracking();
+                    clearPortraits();
+                    return;
                 }
-                // ------------------------------------------
 
                 state.scene = sceneId;
                 state.index = 0;
                 state.isTyping = false;
-                
+
                 const scene = SCENES[sceneId];
                 if (!scene) {
                     console.error('場景不存在:', sceneId);
                     return;
                 }
-
-                // 分析當前場景的角色出場情況
+                
                 analyzeSceneForLastAppearances(sceneId);
 
-                // --- 探索遊戲 ---
                 if (scene.gameType === 'discover') {
+                    if (autoTimer) clearTimeout(autoTimer);
                     document.getElementById('dialogue-layer').style.display = 'none';
                     document.getElementById('choices-container').style.display = 'none';
                     if (scene.config.bgImage) changeBg(scene.config.bgImage);
+                    
+                    // 使用新的 runDiscoverGame
                     runDiscoverGame(scene.config);
+                    return;
+                }
+
+                if (scene.gameType === 'temptation') {
+                    if (autoTimer) clearTimeout(autoTimer);
+                    document.getElementById('dialogue-layer').style.display = 'none';
+                    
+                    // 使用改寫後的 runTemptationGame (基於 runMinigame)
+                    runTemptationGame(scene.config);
                     return;
                 }
 
                 if (scene.bg) {
                     changeBg(scene.bg);
                 }
-                
                 renderDialogue();
+
             } catch (error) {
                 console.error('加載場景時發生錯誤:', error, 'sceneId:', sceneId);
             }
@@ -1566,7 +1790,6 @@
             state.bgSlot = state.bgSlot === 1 ? 2 : 1;
             const next = document.getElementById(`scene-bg-${state.bgSlot}`);
             
-            // Preload
             const img = new Image();
             img.onload = () => {
                 next.style.backgroundImage = `url('${url}')`;
@@ -1576,486 +1799,323 @@
             img.src = url;
         }
 
-        function renderDialogue() {
-            try {
-                const scene = SCENES[state.scene];
-                const layer = document.getElementById('dialogue-layer');
-                const choices = document.getElementById('choices-container');
-                
-                choices.style.display = 'none';
-                layer.style.display = 'flex';
-
-                if (state.index >= scene.script.length) {
-                    if (scene.minigame) {
-                        layer.style.display = 'none';
-                        runMinigame(scene.minigame, scene.next);
-                    } else if (scene.choices) {
-                        renderChoices(scene.choices);
-                    } else if (scene.next) {
-                        // [核心修改]：支援動態分支
-                        let nextTarget = scene.next;
-                        
-                        // 如果 next 是一個函數，傳入 state 進行判斷
-                        if (typeof nextTarget === 'function') {
-                            nextTarget = nextTarget(state);
-                        }
-                        
-                        loadScene(nextTarget);
-                    }
-                    return;
-                }
-
-                const line = scene.script[state.index];
-                const nameBox = document.getElementById('character-name-box');
-                const nameEl = document.getElementById('character-name');
-
-                if (line.char === CHARS.NARRATOR) {
-                    nameBox.style.visibility = 'hidden';
-                    hideAllPortraits(); // 旁白時隱藏立繪
-                } else {
-                    nameBox.style.visibility = 'visible';
-                    nameEl.innerHTML = `<span style="color:${line.char.color}">${line.char.name}</span>   <span class="char-tag">${line.char.tag}</span>`;
-                    
-                    // 更新立繪：使用新的帶有淡出檢測的函數
-                    updateCharacterPortraitWithFade(line.char, state.index);
-                }
-
-                typeWriter(line.text);
-            } catch (error) {
-                console.error('渲染對話時發生錯誤:', error);
-            }
-        }
-
-        function typeWriter(text) {
-            state.isTyping = true;
-            const el = document.getElementById('dialogue-text');
-            const indicator = document.getElementById('next-indicator');
-            
-            el.innerHTML = '';
-            indicator.style.display = 'none';
-            
-            let i = 0;
-            const speed = 25;
-
-            function type() {
-                if (!state.isTyping) {
-                    el.innerHTML = text;
-                    finishType();
-                    return;
-                }
-                
-                if (i < text.length) {
-                    if (text[i] === '<') {
-                        let tag = '';
-                        while (text[i] !== '>') {
-                            tag += text[i];
-                            i++;
-                        }
-                        tag += '>';
-                        i++;
-                        el.innerHTML += tag;
-                    } else {
-                        el.innerHTML += text[i];
-                        i++;
-                    }
-                    setTimeout(type, speed);
-                } else {
-                    finishType();
-                }
-            }
-            type();
-        }
-
-        function finishType() {
-            state.isTyping = false;
-            document.getElementById('next-indicator').style.display = 'block';
-        }
-
-        function handleDialogueClick() {
-            const scene = SCENES[state.scene];
-            // If in a non-dialogue state (like game or choices), ignore
-            if (!scene.script) return;
-            if (document.getElementById('choices-container').style.display !== 'none') return;
-
-            if (state.isTyping) {
-                state.isTyping = false;
-            } else {
-                state.index++;
-                renderDialogue();
-            }
-        }
-
-        function renderChoices(choices) {
-            const container = document.getElementById('choices-container');
-            container.innerHTML = '';
-            container.style.display = 'flex';
-
-            hideAllPortraits();
-
-            choices.forEach(choice => {
-                const btn = document.createElement('button');
-                btn.className = 'choice-btn';
-                btn.textContent = choice.text;
-                
-                // 設置點擊事件
-                btn.onclick = (e) => {
-                    e.stopPropagation(); // 防止觸發背景點擊
-
-                    // 1. 處理權重變化
-                    if (choice.weights) {
-                        for (let key in choice.weights) {
-                            if (state.weights.hasOwnProperty(key)) {
-                                state.weights[key] += choice.weights[key];
-                                // 測試用：在控制台顯示變化，發布時可註解掉
-                                console.log(`權重更新 [${key}]: ${state.weights[key]}`);
-                            }
-                        }
-                    }
-
-                    // 2. 處理畫面跳轉 (支援條件判斷)
-                    container.style.display = 'none';
-                    
-                    let nextTarget = choice.target;
-                    
-                    // 如果 target 是一個函數 (用於判斷結局)，則執行它獲取結果
-                    if (typeof nextTarget === 'function') {
-                        nextTarget = nextTarget(state);
-                    }
-                    
-                    loadScene(nextTarget);
-                };
-                container.appendChild(btn);
-            });
-        }
-
-
-        // --- 小遊戲 1: 拒絕誘惑 ---
-        function runMinigame(type, nextScene) {
+        // ==================== 改寫後的 Minigame 1: 拒絕誘惑 (原 runMinigame) ====================
+        // 注意：這裡改名為 runTemptationGame 以適配 SCENES 中的調用
+        function runTemptationGame(config) {
             const overlay = document.getElementById('minigame-overlay');
             overlay.innerHTML = '';
             overlay.style.display = 'flex';
 
             hideAllPortraits();
             
-            if (type === 'reject_temptation') {
-                overlay.innerHTML = `
-                    <div style="position: absolute; top: 20px; width: 100%; text-align: center; z-index: 30; pointer-events: none;">
-                        <h2 style="font-size: 1.5rem; color: #ffca28; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">【心志試煉】眾裡尋他</h2>
-                        <p style="font-size: 0.9rem; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">
-                            點擊<span style="color:#4caf50; font-weight:bold;">綠色邊框的正確詞語</span>，避免<span style="color:#ff5722; font-weight:bold;">紅色邊框的誘惑詞語</span>
-                        </p>
-                        <br>
-                        <div id="game-status" style="margin-top:5px; font-weight:bold; color: #fff; font-size: 1.2rem;">進度: 0/5</div>
-                        <div id="game-timer" style="margin-top:5px; color: #ffca28; font-size: 1rem;">時間: 60秒</div>
-                    </div>
-                    <div id="temptation-area" style="
-                        position: relative;
-                        width: 90%;
-                        height: 70%;
-                        max-width: 800px;
-                        max-height: 600px;
-                        background: rgba(20, 20, 30, 0.7);
-                        border: 2px solid rgba(255, 179, 0, 0.3);
-                        border-radius: 10px;
-                        overflow: hidden;
-                        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-                    "></div>
+            // 使用您提供的 UI 結構
+            overlay.innerHTML = `
+                <div style="position: absolute; top: 20px; width: 100%; text-align: center; z-index: 30; pointer-events: none;">
+                    <h2 style="font-size: 1.5rem; color: #ffca28; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">【心志試煉】眾裡尋他</h2>
+                    <p style="font-size: 0.9rem; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">
+                        點擊<span style="color:#4caf50; font-weight:bold;">綠色邊框的正確詞語</span>，避免<span style="color:#ff5722; font-weight:bold;">紅色邊框的誘惑詞語</span>
+                    </p>
+                    <br>
+                    <div id="game-status" style="margin-top:5px; font-weight:bold; color: #fff; font-size: 1.2rem;">進度: 0/5</div>
+                    <div id="game-timer" style="margin-top:5px; color: #ffca28; font-size: 1rem;">時間: 60秒</div>
+                </div>
+                <div id="temptation-area" style="
+                    position: relative;
+                    width: 90%;
+                    height: 70%;
+                    max-width: 800px;
+                    max-height: 600px;
+                    background: rgba(20, 20, 30, 0.7);
+                    border: 2px solid rgba(255, 179, 0, 0.3);
+                    border-radius: 10px;
+                    overflow: hidden;
+                    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+                "></div>
+            `;
+
+            let progress = 0;
+            let timeLeft = 60;
+            let active = true;
+            const area = document.getElementById('temptation-area');
+            const status = document.getElementById('game-status');
+            const timerEl = document.getElementById('game-timer');
+
+            const correctWords = ["清醒", "故土", "北伐", "忠義", "山河", "風骨", "堅守", "本心", "責任", "理想"];
+            const wrongWords = ["富貴", "享樂", "黃金", "美酒", "功名", "寶馬", "花燈", "沉淪", "忘卻", "溫柔鄉", "安逸", "妥協", "逃避"];
+
+            // 計時器
+            const timerInterval = setInterval(() => {
+                if (!active) return;
+                timeLeft--;
+                timerEl.textContent = `時間: ${timeLeft}秒`;
+                
+                if (timeLeft <= 10) {
+                    timerEl.style.color = "#ff5252";
+                    timerEl.style.animation = "pulse 0.5s infinite";
+                }
+                
+                if (timeLeft <= 0) {
+                    endGame(false, "時間到！");
+                }
+            }, 1000);
+
+            function spawnWord() {
+                if (!active) return;
+                
+                const isTarget = Math.random() > 0.7; // 30% 機率是目標
+                const word = isTarget ? 
+                    correctWords[Math.floor(Math.random() * correctWords.length)] : 
+                    wrongWords[Math.floor(Math.random() * wrongWords.length)];
+
+                const el = document.createElement('div');
+                el.textContent = word;
+                el.className = 'distraction-item';
+                
+                // 基礎樣式設定
+                el.style.cssText = `
+                    position: absolute;
+                    white-space: nowrap;
+                    font-size: ${1.5 + Math.random() * 0.5}rem;
+                    cursor: pointer;
+                    user-select: none;
+                    z-index: 10;
+                    opacity: 0.95;
+                    padding: 8px 15px;
+                    border-radius: 20px;
+                    font-family: 'Noto Serif TC', serif;
+                    transition: all 0.2s ease;
+                    will-change: transform;
+                    backdrop-filter: blur(2px);
                 `;
 
-                let progress = 0;
-                let timeLeft = 60;
-                let active = true;
-                const area = document.getElementById('temptation-area');
-                const status = document.getElementById('game-status');
-                const timerEl = document.getElementById('game-timer');
-
-                const correctWords = ["清醒", "故土", "北伐", "忠義", "山河", "風骨", "堅守", "本心", "責任", "理想"];
-                const wrongWords = ["富貴", "享樂", "黃金", "美酒", "功名", "寶馬", "花燈", "沉淪", "忘卻", "溫柔鄉", "安逸", "妥協", "逃避"];
-
-                // 計時器
-                const timerInterval = setInterval(() => {
-                    if (!active) return;
-                    timeLeft--;
-                    timerEl.textContent = `時間: ${timeLeft}秒`;
+                // 根據詞語類型設定樣式
+                if (isTarget) {
+                    // 正確詞語 - 綠色邊框
+                    el.style.color = '#e8f5e9';
+                    el.style.backgroundColor = 'rgba(76, 175, 80, 0.2)';
+                    el.style.border = '2px solid #4caf50';
+                    el.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.3)';
                     
-                    if (timeLeft <= 10) {
-                        timerEl.style.color = "#ff5252";
-                        timerEl.style.animation = "pulse 0.5s infinite";
-                    }
-                    
-                    if (timeLeft <= 0) {
-                        endGame(false, "時間到！");
-                    }
-                }, 1000);
-
-                function spawnWord() {
-                    if (!active) return;
-                    
-                    const isTarget = Math.random() > 0.7; // 30% 機率是目標
-                    const word = isTarget ? 
-                        correctWords[Math.floor(Math.random() * correctWords.length)] : 
-                        wrongWords[Math.floor(Math.random() * wrongWords.length)];
-
-                    const el = document.createElement('div');
-                    el.textContent = word;
-                    el.className = 'distraction-item';
-                    
-                    // 基礎樣式設定
-                    el.style.cssText = `
-                        position: absolute;
-                        white-space: nowrap;
-                        font-size: ${1.5 + Math.random() * 0.5}rem;
-                        cursor: pointer;
-                        user-select: none;
-                        z-index: 10;
-                        opacity: 0.95;
-                        padding: 8px 15px;
-                        border-radius: 20px;
-                        font-family: 'Noto Serif TC', serif;
-                        transition: all 0.2s ease;
-                        will-change: transform;
-                        backdrop-filter: blur(2px);
-                    `;
-
-                    // 根據詞語類型設定樣式
-                    if (isTarget) {
-                        // 正確詞語 - 綠色邊框
-                        el.style.color = '#e8f5e9';
-                        el.style.backgroundColor = 'rgba(76, 175, 80, 0.2)';
-                        el.style.border = '2px solid #4caf50';
-                        el.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.3)';
+                    el.onclick = (e) => {
+                        if (!active) return;
+                        e.stopPropagation();
+                        progress++;
+                        status.textContent = `進度: ${progress}/5`;
+                        status.style.color = "#4caf50";
                         
-                        el.onclick = (e) => {
-                            if (!active) return;
-                            e.stopPropagation();
-                            progress++;
-                            status.textContent = `進度: ${progress}/5`;
-                            status.style.color = "#4caf50";
-                            
-                            // 點擊效果
-                            el.style.transform = 'scale(1.3)';
-                            el.style.opacity = '0';
-                            el.style.borderColor = '#8bc34a';
-                            el.style.boxShadow = '0 0 20px #8bc34a';
-                            el.style.transition = 'all 0.3s';
-                            
-                            // 顯示反饋
-                            showFeedback("", "#4caf50");
-                            
-                            setTimeout(() => el.remove(), 300);
-
-                            if (progress >= 5) {
-                                endGame(true, "恭喜！心志堅定！");
-                            }
-                        };
-                    } else {
-                        // 錯誤詞語 - 紅色邊框
-                        el.style.color = '#ffebee';
-                        el.style.backgroundColor = 'rgba(244, 67, 54, 0.2)';
-                        el.style.border = '2px solid #f44336';
-                        el.style.boxShadow = '0 0 10px rgba(244, 67, 54, 0.3)';
-                        el.style.fontWeight = 'bold';
+                        // 點擊效果
+                        el.style.transform = 'scale(1.3)';
+                        el.style.opacity = '0';
+                        el.style.borderColor = '#8bc34a';
+                        el.style.boxShadow = '0 0 20px #8bc34a';
+                        el.style.transition = 'all 0.3s';
                         
-                        el.onclick = (e) => {
-                            if (!active) return;
-                            e.stopPropagation();
-                            
-                            // 錯誤懲罰
-                            if (progress > 0) progress--;
-                            status.textContent = `進度: ${progress}/5`;
-                            status.style.color = "#f44336";
-                            
-                            // 錯誤效果
-                            el.style.transform = 'scale(1.1)';
-                            el.style.borderColor = '#ff5252';
-                            el.style.boxShadow = '0 0 20px #ff5252';
-                            el.style.backgroundColor = 'rgba(244, 67, 54, 0.4)';
-                            
-                            // 顯示反饋
-                            showFeedback("✗ 心志動搖！", "#f44336");
-                            
-                            // 遊戲區域震動效果
-                            area.style.transform = 'translateX(5px)';
-                            setTimeout(() => area.style.transform = 'translateX(-5px)', 50);
-                            setTimeout(() => area.style.transform = 'translateX(0)', 100);
-                            
-                            // 紅色閃光效果
-                            area.style.backgroundColor = 'rgba(244, 67, 54, 0.1)';
-                            setTimeout(() => area.style.backgroundColor = 'rgba(20, 20, 30, 0.7)', 200);
-                            
-                            setTimeout(() => el.remove(), 500);
-                        };
-                    }
+                        showFeedback("", "#4caf50");
+                        
+                        setTimeout(() => el.remove(), 300);
 
-                    area.appendChild(el);
-
-                    // 計算隨機起始位置（從邊緣進入）
-                    const w = area.clientWidth;
-                    const h = area.clientHeight;
-                    const buffer = 50;
-
-                    let startX, startY, endX, endY;
-                    const edge = Math.floor(Math.random() * 4);
-
-                    switch(edge) {
-                        case 0: // 上邊進入
-                            startX = Math.random() * (w - 100) + 50;
-                            startY = -buffer;
-                            endX = Math.random() * (w - 100) + 50;
-                            endY = h + buffer;
-                            break;
-                        case 1: // 右邊進入
-                            startX = w + buffer;
-                            startY = Math.random() * (h - 100) + 50;
-                            endX = -buffer;
-                            endY = Math.random() * (h - 100) + 50;
-                            break;
-                        case 2: // 下邊進入
-                            startX = Math.random() * (w - 100) + 50;
-                            startY = h + buffer;
-                            endX = Math.random() * (w - 100) + 50;
-                            endY = -buffer;
-                            break;
-                        case 3: // 左邊進入
-                            startX = -buffer;
-                            startY = Math.random() * (h - 100) + 50;
-                            endX = w + buffer;
-                            endY = Math.random() * (h - 100) + 50;
-                            break;
-                    }
-
-                    // 設置初始位置
-                    el.style.left = `${startX}px`;
-                    el.style.top = `${startY}px`;
-
-                    // 動畫
-                    const rotateStart = (Math.random() - 0.5) * 60;
-                    const rotateEnd = rotateStart + (Math.random() - 0.5) * 180;
-                    const duration = 6000 + Math.random() * 4000;
-
-                    const animation = el.animate([
-                        { 
-                            transform: `translate(0, 0) rotate(${rotateStart}deg)`,
-                            opacity: 0.8 
-                        },
-                        { 
-                            transform: `translate(${endX - startX}px, ${endY - startY}px) rotate(${rotateEnd}deg)`,
-                            opacity: 0.8 
+                        if (progress >= 5) {
+                            endGame(true, "恭喜！心志堅定！");
                         }
-                    ], {
-                        duration: duration,
-                        easing: 'linear',
-                        fill: 'forwards'
-                    });
-
-                    animation.onfinish = () => {
-                        if (el.parentNode) el.remove();
                     };
-
-                    // 生成下一個詞語
-                    if (active) {
-                        const nextSpawnTime = 1000 - (progress * 100);
-                        setTimeout(spawnWord, Math.max(400, nextSpawnTime));
-                    }
-                }
-
-                function showFeedback(text, color) {
-                    const feedback = document.createElement('div');
-                    feedback.textContent = text;
-                    feedback.style.cssText = `
-                        position: absolute;
-                        top: 50%;
-                        left: 50%;
-                        transform: translate(-50%, -50%);
-                        color: ${color};
-                        font-size: 2rem;
-                        font-weight: bold;
-                        text-shadow: 0 0 10px rgba(0,0,0,0.8);
-                        z-index: 100;
-                        pointer-events: none;
-                        opacity: 0;
-                        animation: feedbackFade 1s ease-out;
-                    `;
+                } else {
+                    // 錯誤詞語 - 紅色邊框
+                    el.style.color = '#ffebee';
+                    el.style.backgroundColor = 'rgba(244, 67, 54, 0.2)';
+                    el.style.border = '2px solid #f44336';
+                    el.style.boxShadow = '0 0 10px rgba(244, 67, 54, 0.3)';
+                    el.style.fontWeight = 'bold';
                     
-                    area.appendChild(feedback);
-                    setTimeout(() => feedback.remove(), 1000);
-                }
-
-                function endGame(win, message) {
-                    active = false;
-                    clearInterval(timerInterval);
-                    
-                    const remaining = document.querySelectorAll('.distraction-item');
-                    remaining.forEach(item => {
-                        item.style.transition = 'opacity 0.5s, transform 0.5s';
-                        item.style.opacity = '0';
-                        item.style.transform = 'scale(0.5)';
-                        setTimeout(() => {
-                            if (item.parentNode) item.remove();
-                        }, 500);
-                    });
-
-                    // 顯示結果
-                    const resultBox = document.createElement('div');
-                    resultBox.style.cssText = `
-                        position: absolute;
-                        inset: 0;
-                        background: rgba(0, 0, 0, 0.85);
-                        display: flex;
-                        flex-direction: column;
-                        justify-content: center;
-                        align-items: center;
-                        z-index: 50;
-                        animation: fadeIn 0.5s;
-                    `;
-                    
-                    const title = win ? "✓ 挑戰成功" : "✗ 挑戰失敗";
-                    const color = win ? "#4caf50" : "#f44336";
-                    const sub = message || (win ? "心志堅定，不為所動" : "未能抵擋誘惑");
-                    
-                    resultBox.innerHTML = `
-                        <h2 style="color:${color}; font-size:2.5rem; margin-bottom:20px; text-shadow: 0 0 10px ${color}80;">
-                            ${title}
-                        </h2>
-                        <p style="color:#fff; font-size:1.2rem; margin-bottom:30px;">${sub}</p>
-                        <p style="color:#ccc; font-size:1rem; margin-bottom:40px;">點擊繼續</p>
-                        <div style="color:#888; font-size:0.9rem; margin-top:20px;">
-                            最終進度: ${progress}/5 | 剩餘時間: ${timeLeft}秒
-                        </div>
-                    `;
-                    
-                    resultBox.onclick = () => {
-                        overlay.style.display = 'none';
-                        loadScene(nextScene);
+                    el.onclick = (e) => {
+                        if (!active) return;
+                        e.stopPropagation();
+                        
+                        // 錯誤懲罰
+                        if (progress > 0) progress--;
+                        status.textContent = `進度: ${progress}/5`;
+                        status.style.color = "#f44336";
+                        
+                        // 錯誤效果
+                        el.style.transform = 'scale(1.1)';
+                        el.style.borderColor = '#ff5252';
+                        el.style.boxShadow = '0 0 20px #ff5252';
+                        el.style.backgroundColor = 'rgba(244, 67, 54, 0.4)';
+                        
+                        showFeedback("✗ 心志動搖！", "#f44336");
+                        
+                        // 遊戲區域震動效果
+                        area.style.transform = 'translateX(5px)';
+                        setTimeout(() => area.style.transform = 'translateX(-5px)', 50);
+                        setTimeout(() => area.style.transform = 'translateX(0)', 100);
+                        
+                        // 紅色閃光效果
+                        area.style.backgroundColor = 'rgba(244, 67, 54, 0.1)';
+                        setTimeout(() => area.style.backgroundColor = 'rgba(20, 20, 30, 0.7)', 200);
+                        
+                        setTimeout(() => el.remove(), 500);
                     };
-                    
-                    area.appendChild(resultBox);
-                    
-                    // 添加淡入動畫到CSS
-                    if (!document.querySelector('#feedback-animation')) {
-                        const style = document.createElement('style');
-                        style.id = 'feedback-animation';
-                        style.textContent = `
-                            @keyframes feedbackFade {
-                                0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-                                50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
-                                100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
-                            }
-                            @keyframes fadeIn {
-                                from { opacity: 0; }
-                                to { opacity: 1; }
-                            }
-                        `;
-                        document.head.appendChild(style);
-                    }
                 }
 
-                // 開始生成詞語
-                spawnWord();
+                area.appendChild(el);
+
+                // 計算隨機起始位置（從邊緣進入）
+                const w = area.clientWidth;
+                const h = area.clientHeight;
+                const buffer = 50;
+
+                let startX, startY, endX, endY;
+                const edge = Math.floor(Math.random() * 4);
+
+                switch(edge) {
+                    case 0: // 上邊進入
+                        startX = Math.random() * (w - 100) + 50; startY = -buffer;
+                        endX = Math.random() * (w - 100) + 50; endY = h + buffer;
+                        break;
+                    case 1: // 右邊進入
+                        startX = w + buffer; startY = Math.random() * (h - 100) + 50;
+                        endX = -buffer; endY = Math.random() * (h - 100) + 50;
+                        break;
+                    case 2: // 下邊進入
+                        startX = Math.random() * (w - 100) + 50; startY = h + buffer;
+                        endX = Math.random() * (w - 100) + 50; endY = -buffer;
+                        break;
+                    case 3: // 左邊進入
+                        startX = -buffer; startY = Math.random() * (h - 100) + 50;
+                        endX = w + buffer; endY = Math.random() * (h - 100) + 50;
+                        break;
+                }
+
+                el.style.left = `${startX}px`;
+                el.style.top = `${startY}px`;
+
+                // 動畫
+                const rotateStart = (Math.random() - 0.5) * 60;
+                const rotateEnd = rotateStart + (Math.random() - 0.5) * 180;
+                const duration = 6000 + Math.random() * 4000;
+
+                const animation = el.animate([
+                    { 
+                        transform: `translate(0, 0) rotate(${rotateStart}deg)`,
+                        opacity: 0.8 
+                    },
+                    { 
+                        transform: `translate(${endX - startX}px, ${endY - startY}px) rotate(${rotateEnd}deg)`,
+                        opacity: 0.8 
+                    }
+                ], {
+                    duration: duration,
+                    easing: 'linear',
+                    fill: 'forwards'
+                });
+
+                animation.onfinish = () => {
+                    if (el.parentNode) el.remove();
+                };
+
+                if (active) {
+                    const nextSpawnTime = 1000 - (progress * 100);
+                    setTimeout(spawnWord, Math.max(400, nextSpawnTime));
+                }
             }
+
+            function showFeedback(text, color) {
+                const feedback = document.createElement('div');
+                feedback.textContent = text;
+                feedback.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    color: ${color};
+                    font-size: 2rem;
+                    font-weight: bold;
+                    text-shadow: 0 0 10px rgba(0,0,0,0.8);
+                    z-index: 100;
+                    pointer-events: none;
+                    opacity: 0;
+                    animation: feedbackFade 1s ease-out;
+                `;
+                
+                area.appendChild(feedback);
+                setTimeout(() => feedback.remove(), 1000);
+            }
+
+            function endGame(win, message) {
+                active = false;
+                clearInterval(timerInterval);
+                
+                const remaining = document.querySelectorAll('.distraction-item');
+                remaining.forEach(item => {
+                    item.style.transition = 'opacity 0.5s, transform 0.5s';
+                    item.style.opacity = '0';
+                    item.style.transform = 'scale(0.5)';
+                    setTimeout(() => {
+                        if (item.parentNode) item.remove();
+                    }, 500);
+                });
+
+                // 顯示結果
+                const resultBox = document.createElement('div');
+                resultBox.style.cssText = `
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(0, 0, 0, 0.85);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 50;
+                    animation: fadeIn 0.5s;
+                `;
+                
+                const title = win ? "✓ 挑戰成功" : "✗ 挑戰失敗";
+                const color = win ? "#4caf50" : "#f44336";
+                const sub = message || (win ? "心志堅定，不為所動" : "未能抵擋誘惑");
+                
+                resultBox.innerHTML = `
+                    <h2 style="color:${color}; font-size:2.5rem; margin-bottom:20px; text-shadow: 0 0 10px ${color}80;">
+                        ${title}
+                    </h2>
+                    <p style="color:#fff; font-size:1.2rem; margin-bottom:30px;">${sub}</p>
+                    <p style="color:#ccc; font-size:1rem; margin-bottom:40px;">點擊繼續</p>
+                    <div style="color:#888; font-size:0.9rem; margin-top:20px;">
+                        最終進度: ${progress}/5 | 剩餘時間: ${timeLeft}秒
+                    </div>
+                `;
+                
+                resultBox.onclick = () => {
+                    overlay.style.display = 'none';
+                    // 恢復對話框
+                    document.getElementById('dialogue-layer').style.display = 'flex';
+                    // [MODIFIED] 使用 config 中的 nextPass / nextFail
+                    const nextScene = win ? config.nextPass : config.nextFail;
+                    loadScene(nextScene);
+                };
+                
+                area.appendChild(resultBox);
+                
+                if (!document.querySelector('#feedback-animation')) {
+                    const style = document.createElement('style');
+                    style.id = 'feedback-animation';
+                    style.textContent = `
+                        @keyframes feedbackFade {
+                            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+                            100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+                        }
+                        @keyframes fadeIn {
+                            from { opacity: 0; }
+                            to { opacity: 1; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            }
+
+            spawnWord();
         }
 
-        // --- 小遊戲 2: 尋找隱藏物品 ---
+        // ==================== 改寫後的 Minigame 2: 尋找隱藏物品 (原 runDiscoverGame) ====================
         function runDiscoverGame(config) {
             const overlay = document.getElementById('minigame-overlay');
             overlay.innerHTML = '';
@@ -2151,6 +2211,16 @@
                         animation: discoverZoom 0.5s ease-out;
                     `;
                     block.appendChild(circle);
+                    
+                    // 判斷勝利
+                    if (correctCount >= goalCount) {
+                         // 這裡可以選擇立即勝利，或者等待時間結束
+                         // 根據您的代碼邏輯，似乎是等待時間結束或繼續點擊直到全部找到
+                         // 這裡簡單處理：如果全部找到（targets.length），就直接勝利
+                         if (config.targets && correctCount >= config.targets.length) {
+                             endGame(true);
+                         }
+                    }
                 };
 
                 container.appendChild(block);
@@ -2170,6 +2240,7 @@
                     if (correctCount >= goalCount) {
                         const totalTargets = config.targets ? config.targets.length : 4;
                         
+                        // [NEW] 觸發隱藏劇情的權重邏輯
                         if (correctCount >= totalTargets) {
                             if (!state.weights) state.weights = { awakening: 0, favor: 0 };
                             
@@ -2202,7 +2273,7 @@
                     
                     const title = win ? "成功尋獲！" : "失敗";
                     const color = win ? "#ffb300" : "#ff5252";
-                    const sub = win ? "點擊繼續" : "點擊繼續";
+                    const sub = "點擊繼續";
                     
                     resultBox.innerHTML = `
                         <h2 style="color:${color}; font-size:2.5rem; margin-bottom:10px;">${title}</h2>
@@ -2211,6 +2282,8 @@
                     
                     resultBox.onclick = () => {
                         overlay.style.display = 'none';
+                        // 恢復 UI
+                        document.getElementById('dialogue-layer').style.display = 'flex';
                         if (win) {
                             loadScene(config.nextPass);
                         } else {
@@ -2225,13 +2298,33 @@
             overlay.appendChild(container);
         }
 
+        // ==================== 結局畫面邏輯 ====================
         function showEnding(endingData) {
-            const overlay = document.getElementById('ending-overlay');
+            document.getElementById('dialogue-layer').style.display = 'none';
+            document.getElementById('choices-container').style.display = 'none';
+            document.getElementById('minigame-overlay').style.display = 'none';
+
+            const overlay = document.createElement('div');
+            overlay.id = 'ending-overlay';
+            
+            overlay.innerHTML = `
+                <div class="ending-banner">
+                    <div id="end-type"></div>
+                    <h1 id="end-title"></h1>
+                </div>
+                <div style="margin-top: 50px; color: #888; animation: pulse 2s infinite;">點擊屏幕繼續</div>
+            `;
+
+            overlay.onclick = () => {
+                loadScene('cast'); 
+            };
+
+            document.getElementById('game-app').appendChild(overlay);
+
             const typeEl = document.getElementById('end-type');
             const titleEl = document.getElementById('end-title');
             const banner = overlay.querySelector('.ending-banner');
 
-            // 設定文字
             typeEl.textContent = endingData.type || "ENDING";
             titleEl.textContent = endingData.title || "未命名結局";
 
@@ -2243,11 +2336,10 @@
             overlay.style.display = 'flex';
         }
 
-        // 確保所有必要的函數都暴露在全局作用域
         window.startGame = startGame;
         window.handleDialogueClick = handleDialogueClick;
-    /* 
-    =======================================================
+
+    /* =======================================================
     邦邦邦邦！我就是彩蛋！
     恰髏！(∠·ω )⌒★
     哇啊！是柚子厨！快逃口牙！
@@ -2255,6 +2347,19 @@
     怎麽可能啦！
     =======================================================
     </ script>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
