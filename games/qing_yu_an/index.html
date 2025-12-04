@@ -218,7 +218,7 @@
             text-align: center;
         }
         .title-main { font-size: 5rem; letter-spacing: 0.5rem; margin-bottom: 1rem; text-shadow: 0 0 20px #ffb300; line-height: 1.1; }
-        .title-sub { font-size: 1.5rem; color: #888; margin-bottom: 4rem; letter-spacing: 0.2rem; }
+        .title-sub { font-size: 2rem; color: #888; margin-bottom: 4rem; letter-spacing: 0.2rem; }
 
         /* --- 小遊戲通用 UI --- */
         #minigame-overlay {
@@ -276,6 +276,149 @@
             transform: scale(1.05);
             transition: all 0.1s;
         }
+
+        /* --- 結局畫面樣式 --- */
+        #ending-overlay {
+            position: absolute;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.85); /* 深色半透明背景 */
+            z-index: 60;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        .ending-banner {
+            width: 100%;
+            padding: 40px 0;
+            background: linear-gradient(90deg, transparent, rgba(168, 60, 60, 0.9), transparent); /* 紅色漸層背景 */
+            text-align: center;
+            color: #fff;
+            transform: scale(0.9);
+            animation: bannerPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* 根據結局類型改變背景色 (可選) */
+        .ending-banner.good {
+            background: linear-gradient(90deg, transparent, rgba(60, 168, 80, 0.9), transparent); /* 綠色 */
+        }
+
+        #end-type {
+            font-size: 1.2rem;
+            letter-spacing: 5px;
+            margin-bottom: 10px;
+            font-weight: 300;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            color: #ffd700;
+        }
+
+        #end-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0;
+            text-shadow: 0 0 10px rgba(255,255,255,0.5);
+            font-family: 'Noto Serif TC', serif; /* 確保用襯線體 */
+        }
+
+        /* --- 立繪系統 --- */
+        #character-portraits {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            pointer-events: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 20px 20px 20px; /* 減少底部padding讓人物更大 */
+            box-sizing: border-box;
+        }
+
+        .portrait-slot {
+            width: 45%; /* 增加寬度 */
+            max-width: 550px; /* 增加最大寬度 */
+            height: 85%; /* 增加高度 */
+            max-height: 750px; /* 增加最大高度 */
+            position: relative;
+            overflow: hidden;
+        }
+
+        .portrait-slot.left {
+            align-self: flex-start;
+            margin-top: 3%; /* 減少上邊距 */
+        }
+
+        .portrait-slot.right {
+            align-self: flex-end;
+        }
+
+        .character-illustration {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: auto;
+            max-height: 100%;
+            object-fit: contain;
+            object-position: bottom;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease, transform 0.8s ease, filter 0.8s ease;
+            filter: drop-shadow(0 0 15px rgba(0,0,0,0.5));
+            will-change: opacity, transform;
+        }
+
+        .character-illustration.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .character-illustration.speaking {
+            filter: drop-shadow(0 0 25px rgba(255, 179, 0, 0.4)) brightness(1.15);
+        }
+
+        .character-illustration.fading {
+            opacity: 0.6; /* 從 0.3 改為 0.6，更明顯 */
+            filter: brightness(0.85) drop-shadow(0 0 10px rgba(0,0,0,0.3));
+        }
+
+        /* 響應式調整 */
+        @media (max-width: 1024px) {
+            #character-portraits {
+                padding: 0 15px 20px 15px;
+            }
+            
+            .portrait-slot {
+                width: 45%;
+                height: 70%;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .portrait-slot {
+                width: 48%;
+                height: 60%;
+            }
+        }
+
+        @media (orientation: portrait) {
+            #character-portraits {
+                padding: 0 10px 10px 10px;
+            }
+            
+            .portrait-slot {
+                height: 50%;
+                max-height: 400px;
+            }
+        }
+
+        @keyframes bannerPop {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
         @keyframes float {
             0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
             10% { opacity: 1; }
@@ -300,6 +443,12 @@
     寫得有點無聊了，特此寫個評論紀念一下~
     也紀念一下無聊的你找到了我~
     既然你找到了我的話，那就去展開<body>看看吧！有獎勵哦？
+    ___   __    __   __________   __      __   __        ___
+   /  /  |  |  |  | |___    ___| |  \    /  | |  |       \  \
+  /  /   |  |__|  |     |  |     |   \  /   | |  |        \  \
+ |  |    |   __   |     |  |     |  \ \/ /  | |  |         |  |
+  \  \   |  |  |  |     |  |     |  |\__/|  | |  |_____   /  /
+   \__\  |__|  |__|     |__|     |__|    |__| |________| /__/
 =======================================================
 -->
 <body>
@@ -311,12 +460,18 @@
             <h1 class="title-main">青玉案 · 元夕</h1>
             <h2 class="title-sub">眾裡尋他千百度，驀然迴首，那人卻在，燈火闌珊處</h2>
             <button class="choice-btn" style="text-align: center; font-size: 1.4rem; width: auto; justify-content: center; border-left: 3px solid #555; border-right: 3px solid #555; border-top: 2px solid #555; border-bottom: 2px solid #555;" onclick="startGame(this)">入夢 · 淳熙二年元夕</button>
-            <p style="margin-top: 20px; color: #555; font-size: 1.3rem;">《青玉案 · 元夕》題材半GALGAME</p>
-            <p style="margin-top: 20px; color: #555; font-size: 1.2rem;">5D 鍾皓朗 製 · 導</p>
+            <br>
+            <p style="margin-top: 20px; color: #555; font-size: 1.75rem;">《青玉案 · 元夕》題材 GALGAME</p>
         </div>
 
         <div id="scene-bg-1" class="scene-bg"></div>
         <div id="scene-bg-2" class="scene-bg"></div>
+
+        <div id="character-portraits">
+            <div class="portrait-slot left" data-side="left"></div>
+            <div class="portrait-slot right" data-side="right"></div>
+        </div>
+        
         <div class="vignette"></div>
 
         <div id="particles" style="position:absolute; inset:0; pointer-events:none;"></div>
@@ -332,9 +487,12 @@
         <div id="choices-container" style="display: none;"></div>
 
         <div id="minigame-overlay"></div>
-    </div>
 
-    <script>
+<script>
+        // ==================== 全局變數初始化 ====================
+        let characterLastAppearance = {};  // 集中管理角色出場追蹤
+        let activePortraits = { left: null, right: null };  // 統一管理立繪狀態
+
         // --- 手機視窗高度修正 ---
         function setVh() {
             let vh = window.innerHeight * 0.01;
@@ -355,37 +513,85 @@
         };
 
         const CHARS = {
-            XIN: { name: "辛棄疾", tag: "憂國憂民", color: "#ffca28" },
-            UXIN: { name: "？？？", tag: "未知男子", color: "#ffca28" },
-            ME: { name: "我", tag: "", color: "#a8dadc" },
-            YE: { name: "葉知秋", tag: "舊識書生", color: "#ff6b6b" },
-            LADY: { name: "貴婦", tag: "", color: "#e1bee7" },
-            SERVER: {name: "婢女", tag: "", color:"#e1bee7" },
-            NARRATOR: { name: "", tag: "", color: "#ccc" },
-            TEACHER: {name: "老師", tag: "", color: "#e0e0e0" }
+            XIN: { 
+                name: "辛棄疾", 
+                tag: "憂國憂民", 
+                color: "#ffca28",
+                portrait: "https://rulkallos-chl.github.io/img/xin_portrait.png",
+                side: "left"
+            },
+            UXIN: { 
+                name: "？？？", 
+                tag: "未知男子", 
+                color: "#ffca28",
+                portrait: "https://rulkallos-chl.github.io/img/unknown_portrait.png",
+                side: "left"
+            },
+            ME: { 
+                name: "我", 
+                tag: "", 
+                color: "#a8dadc",
+                portrait: "https://rulkallos-chl.github.io/img/me_portrait.png",
+                side: null
+            },
+            YE: { 
+                name: "葉知秋", 
+                tag: "舊識書生", 
+                color: "#ff6b6b",
+                portrait: "https://rulkallos-chl.github.io/img/ye_portrait.png",
+                side: "right"
+            },
+            LADY: { 
+                name: "貴婦", 
+                tag: "", 
+                color: "#e1bee7",
+                portrait: null, // "https://rulkallos-chl.github.io/img/貴婦.png",
+                side: "right"
+            },
+            NARRATOR: { 
+                name: "", 
+                tag: "", 
+                color: "#ccc",
+                portrait: null
+            },
+            TEACHER: {
+                name: "老師", 
+                tag: "", 
+                color: "#e0e0e0",
+                portrait: "https://rulkallos-chl.github.io/img/teacher_portrait.png",
+                side: "left"
+            }
         };
-        
+
         let state = {
             scene: 'start',
             index: 0,
             bgSlot: 1,
-            isTyping: false
+            isTyping: false,
+            weights: {
+                awakening: 0,
+                favor: 0
+            }
         };
 
         // --- 劇情數據 ---
         const SCENES = {
+            // ============================================================
+            //  第一章：序幕 & 穿越
+            // ============================================================
             'start': {
                 bg: IMAGES.START,
                 script: [
-                    { char: CHARS.NARRATOR, text: "又是一個普通的上學天。"},
-                    { char: CHARS.NARRATOR, text: "又是一個沉悶的中文課。"},
-                    { char: CHARS.ME, text: "（昨晚打游戲機打到凌晨三點，現在根本清醒不了啊！）"},
-                    { char: CHARS.ME, text:"（算了，睡就睡吧，醒來最多被老師罵……）"},
+                    { char: CHARS.NARRATOR, text: "又是一個普通的上學天。" },
+                    { char: CHARS.NARRATOR, text: "又是一個沉悶的中文課。" },
+                    { char: CHARS.ME, text: "（昨晚打游戲機打到凌晨三點，現在根本清醒不了啊！）" },
+                    { char: CHARS.ME, text: "（算了，睡就睡吧，醒來最多被老師罵……）" },
                     { char: CHARS.NARRATOR, text: "老師的聲音在耳邊漸漸模糊，化作一片嗡嗡的背景音。" },
                     { char: CHARS.NARRATOR, text: "我趴在攤開的課本上，眼皮沉重地合攏，最後映入眼簾的，是辛棄疾那首《青玉案·元夕》。" }
                 ],
-                next: 'flow'
+                next: 'flow'  // flow
             },
+
             'flow': {
                 bg: IMAGES.FLOW,
                 script: [
@@ -394,10 +600,14 @@
                 ],
                 next: 'scene_market#1'
             },
+
+            // ============================================================
+            //  第二章：初遇辛棄疾 (分支選擇)
+            // ============================================================
             'scene_market#1': {
                 bg: IMAGES.MARKET,
                 script: [
-                    { char: CHARS.ME, text: "啪！（打自己一巴掌）"},
+                    { char: CHARS.ME, text: "啪！（打自己一巴掌）" },
                     { char: CHARS.ME, text: "（這不是夢！我竟在打瞌睡間，來到了這陌生的繁華市集！？）" },
                     { char: CHARS.NARRATOR, text: "夜空彷彿被劃破，無數道喧嘯的火龍竄上天際，在到達穹頂點時炸開，化作千萬朵轉瞬即逝的銀花。" },
                     { char: CHARS.NARRATOR, text: "爆炸的轟鳴聲此起彼落，震得腳下的青石板都在微微顫抖。" },
@@ -406,22 +616,22 @@
                     { char: CHARS.NARRATOR, text: "我在大街的人潮中，被興奮狂歡的百姓推擠得東倒西歪。" },
                     { char: CHARS.NARRATOR, text: "但我身邊的那人，卻像是定海神針，任憑濁浪排空，紋絲不動。" },
                     { char: CHARS.ME, text: "先生……呃，請問現在是什麽年份？" },
-                    { char: CHARS.ME, text: "……這裏又是哪裏？"},
-                    { char: CHARS.NARRATOR, text: "那人看著你，仔細地看著你身上過於現代的西式校服。"},
-                    { char: CHARS.UXIN, text: "現在乃是淳熙二年，這裏便是臨安城。"},
-                    { char: CHARS.UXIN, text: "我觀閣下的裝扮獨特，不似我宋人。敢問閣下何人，從何而來？"},
-                    { char: CHARS.ME, text: "嗯……我叫李一心，是西域來到的……"},
-                    { char: CHARS.NARRATOR, text: "那人若有所思。"},
-                    { char: CHARS.ME, text: "那麽先生又是？"},
-                    { char: CHARS.UXIN, text: "尋常的騷人罷了。"},
-                    { char: CHARS.ME, text: "（嗯……在這繁華之中穿搭如此平凡，還戴著一柄破舊的佩劍！）"},
-                    { char: CHARS.ME, text: "敢問先生，可名叫辛棄疾？"},
-                    { char: CHARS.ME, text: "啊啊！應該叫您辛大人。"},
+                    { char: CHARS.ME, text: "……這裏又是哪裏？" },
+                    { char: CHARS.NARRATOR, text: "那人看著你，仔細地看著你身上過於現代的西式校服。" },
+                    { char: CHARS.UXIN, text: "現在乃是淳熙二年，這裏便是臨安城。" },
+                    { char: CHARS.UXIN, text: "我觀閣下的裝扮獨特，不似我宋人。敢問閣下何人，從何而來？" },
+                    { char: CHARS.ME, text: "嗯……我叫李一心，是西域來到的……" },
+                    { char: CHARS.NARRATOR, text: "那人若有所思。" },
+                    { char: CHARS.ME, text: "那麽先生又是？" },
+                    { char: CHARS.UXIN, text: "尋常的騷人罷了。" },
+                    { char: CHARS.ME, text: "（嗯……在這繁華之中穿搭如此平凡，還戴著一柄破舊的佩劍！）" },
+                    { char: CHARS.ME, text: "敢問先生，可名叫辛棄疾？" },
+                    { char: CHARS.ME, text: "啊啊！應該叫您辛大人。" },
                     { char: CHARS.NARRATOR, text: "那人微微一驚。" },
                     { char: CHARS.UXIN, text: "噢？居然知道我這個小官嗎？" },
-                    { char: CHARS.XIN, text: "不錯。在下便是辛棄疾。"},
-                    { char: CHARS.XIN, text: "不想未曾到訪臨安的西域友人竟然也知在下小名，實屬榮幸。"},
-                    { char: CHARS.ME, text: "（不是哥們，還真是你啊！）"},
+                    { char: CHARS.XIN, text: "不錯。在下便是辛棄疾。" },
+                    { char: CHARS.XIN, text: "不想未曾到訪臨安的西域友人竟然也知在下小名，實屬榮幸。" },
+                    { char: CHARS.ME, text: "（不是哥們，還真是你啊！）" },
                     { char: CHARS.ME, text: "（原來他便是辛棄疾嗎？……三十開外，眼角已有風霜的刻痕，但雙目依然如此炯炯有神。）" },
                     { char: CHARS.NARRATOR, text: "我不得不提高聲量，才能蓋過周遭的喧囂。" },
                     { char: CHARS.ME, text: "先生，這可真是盛世啊……" },
@@ -431,16 +641,30 @@
                     { char: CHARS.NARRATOR, text: "我愣了一下。" }
                 ],
                 choices: [
-                    { 
-                        text: "確實……這聲音帶著難以看見的殺伐之氣……", 
-                        target: 'scene_market#2' 
+                    {
+                        text: "確實……這聲音帶著難以看見的殺伐之氣……",
+                        target: 'scene_market#2',
+                        weights: {
+                            awakening: 5,
+                            favor: 5
+                        }
                     },
-                    { 
-                        text: "不會啊，這只是喜慶的煙火！", 
+                    {
+                        text: "看來《六國論》的結局已經應驗了……",
+                        target: 'scene_market#4',
+                        weights: {
+                            awakening: 10,
+                            favor: 10
+                        }
+
+                    },
+                    {
+                        text: "不會啊，這只是喜慶的煙火！",
                         target: 'scene_market#3',
                     }
                 ],
             },
+
             'scene_market#2': {
                 script: [
                     { char: CHARS.XIN, text: "你説的很對……" },
@@ -455,6 +679,7 @@
                 ],
                 next: 'scene_ye'
             },
+
             'scene_market#3': {
                 script: [
                     { char: CHARS.NARRATOR, text: "辛棄疾看著漫天煙花，嘆了口氣。" },
@@ -465,10 +690,77 @@
                     { char: CHARS.NARRATOR, text: "他痛苦地閉了上眼。" },
                     { char: CHARS.XIN, text: "清醒的人還是太少了……" },
                     { char: CHARS.XIN, text: "好人寥寥啊！" },
-                    { char: CHARS.NARRATOR, text: "辛棄疾看了你一眼后，便轉身走入了人群中，不見蹤影……"}
+                    { char: CHARS.NARRATOR, text: "辛棄疾看了你一眼后，便轉身走入了人群中，不見蹤影……" }
                 ],
                 next: 'scene_wakeup_BAD#1'
             },
+
+            'scene_market#4' : {
+                script: [
+                    { char: CHARS.NARRATOR, text: "辛棄疾震驚地看著你。" },
+                    { char: CHARS.XIN, text: "閣下説的可是蘇洵老先生《嘉祐集》的《六國論》？" },
+                    { char: CHARS.NARRATOR, text: "（你點頭回應）" },
+                    { char: CHARS.XIN, text: "在下有眼不識泰山！" },
+                    { char: CHARS.XIN, text: "是在下先入爲主，以貌取人了，竟然不知閣下雖爲西域人，也讀過老泉的著作！" },
+                    { char: CHARS.NARRATOR, text: "説罷，他皺著眉地閉了上眼。" },
+                    { char: CHARS.XIN, text: "閣下是我在這臨安，見過的唯一清醒……" },
+                    { char: CHARS.XIN, text: "不知閣下對於《六國論》的論點有何見解？" },
+                    { char: CHARS.NARRATOR, text: "辛棄疾似乎很着急地看著你。" }
+                ],
+                choices: [
+                    {
+                        text: "明明宋金皆大國，大宋卻甘願臣服在金人的鞭子下。這不就是賂秦嗎？",
+                        target: 'scene_market#5',
+                        weights: {
+                            awakening: 5,
+                            favor: 5
+                        }
+                    },
+                    {
+                        text: "仗都不打，只懂割地賠款，怎知道打不打得過呢？",
+                        target: 'scene_market#6',
+                        weights: {
+                            awakening: 5,
+                            favor: 5
+                        }
+
+                    },
+                ]
+            },
+
+            'scene_market#5': {
+                script: [
+                    { char: CHARS.NARRATOR, text: "辛棄疾看著漫天煙花，嘆了口氣。" },
+                    { char: CHARS.XIN, text: "弊在賂秦啊……" },
+                    { char: CHARS.XIN, text: "賂秦而力虧，破滅之道也！" },
+                    { char: CHARS.XIN, text: "看著這些不知大難臨頭的人，我只覺痛心。" },
+                    { char: CHARS.XIN, text: "清醒的人還是太少了……" },
+                    { char: CHARS.XIN, text: "好人寥寥啊！" },
+                    { char: CHARS.NARRATOR, text: "（辛棄疾沉默了片刻）" },
+                    { char: CHARS.XIN, text: "走吧！" },
+                ],
+                next: 'scene_ye'
+            },
+
+            'scene_market#6': {
+                script: [
+                    { char: CHARS.NARRATOR, text: "辛棄疾看著漫天煙花，嘆了口氣。" },
+                    { char: CHARS.XIN, text: "當年太祖艱苦立國，得到了這點江山" },
+                    { char: CHARS.XIN, text: "可現在呢？" },
+                    { char: CHARS.XIN, text: "朝廷棄之如草芥！" },
+                    { char: CHARS.NARRATOR, text: "他痛苦地閉了上眼。" },
+                    { char: CHARS.XIN, text: "今日割五城，明日割十城……" },
+                    { char: CHARS.XIN, text: "金的暴欲與當年秦如出一轍！奉之彌繁，侵之愈急……不戰而敗亡也！" },
+                    { char: CHARS.XIN, text: "根本就是抱薪救火，真的沒救了嗎？" },
+                    { char: CHARS.NARRATOR, text: "（辛棄疾沉默了片刻）" },
+                    { char: CHARS.XIN, text: "走吧！" },
+                ],
+                next: 'scene_ye'
+            },
+
+            // ============================================================
+            //  第三章：繁華與虛假 (小遊戲前置)
+            // ============================================================
             'scene_ye': {
                 bg: IMAGES.LADIES,
                 script: [
@@ -476,39 +768,59 @@
                     { char: CHARS.NARRATOR, text: "道路中央，一輛接一輛極盡奢華的馬車緩緩駛過。" },
                     { char: CHARS.NARRATOR, text: "車上鑲嵌著寶石，在燈光的折射下出刺眼的光芒。" },
                     { char: CHARS.NARRATOR, text: "拉車的駿馬蹄聲沈悶而傲慢，彷彿在宣告它們比這路上的行人還要尊貴。" },
-                    { char: CHARS.XIN, text: "這裏便是夜市中心了。"},
-                    { char: CHARS.XIN, text: "可真「繁華」啊。"},
-                    { char: CHARS.XIN, text: "都本應該投入到戰場上奮勇殺敵，彌補軍馬戰車的不足、燈油火蠟的短缺……"},
-                    { char: CHARS.XIN, text: "卻在這裏成了炫耀的工具"},
-                    { char: CHARS.XIN, text: "你可能找到這些「繁華」的跡象？"},
-                    { char: CHARS.NARRATOR, text: "（一定要讓辛棄疾欣賞才行！）"}
-                    ],
+                    { char: CHARS.XIN, text: "這裏便是夜市中心了。" },
+                    { char: CHARS.XIN, text: "可真「繁華」啊。" },
+                    { char: CHARS.XIN, text: "都本應該投入到戰場上奮勇殺敵，彌補軍馬戰車的不足、燈油火蠟的短缺……" },
+                    { char: CHARS.XIN, text: "卻在這裏成了炫耀的工具" },
+                    { char: CHARS.XIN, text: "你可能找到這些「繁華」的跡象？" },
+                    { char: CHARS.NARRATOR, text: "（一定要讓辛棄疾欣賞才行！）" }
+                ],
                 next: 'discover_on_#1'
             },
+
+            // --- 小遊戲配置 ---
             'discover_on_#1': {
-                gameType: 'discover', 
+                gameType: 'discover',
                 config: {
                     bgImage: IMAGES.LADIES,
                     targetHint: '「繁華」的跡象',
                     timeLimit: 30,
                     targets: [
-                        { top: '30%', left: '70%', width: '25%', height: '30%' },  //魚龍舞
-                        { top: '60%', left: '60%', width: '20%', height: '20%' },  //寶馬
-                        { top: '30%', left: '35%', width: '30%', height: '40%' },  //雕車
-                        { top: '65%', left: '05%', width: '25%', height: '25%' }   //鳳簫聲動
+                        { top: '30%', left: '55%', width: '30%', height: '30%' },   // 魚龍舞
+                        { top: '58%', left: '43.5%', width: '32%', height: '38%' },   // 寶馬
+                        { top: '30%', left: '30%', width: '25%', height: '50%' },   // 雕車
+                        { top: '62%', left: '2%', width: '27%', height: '35%' }    // 鳳簫
                     ],
-                    limit: 3,         
-                    mistakeLimit: 4,  
-                    nextPass: 'scene_ye_cont',      
-                    nextFail: 'scene_lost_#2'   
+                    limit: 3,
+                    mistakeLimit: 4,
+                    nextPass: 'scene_ye_cont',
+                    nextFail: 'scene_lost_#1'
                 }
             },
-            'scene_ye_cont' : {
+
+            // 小遊戲失敗
+            'scene_lost_#1': {
+                bg: IMAGES.MARKET,
                 script: [
-                    { char: CHARS.XIN, text: "不錯，就是這些寶馬、雕車、魚龍燈飾"},
-                    { char: CHARS.XIN, text: "歌舞升平，都是假象，一棵腐朽的參天大樹罷了。"},
-                    { char: CHARS.XIN, text: "大樹日漸萎縮，越來越快。"},
-                    { char: CHARS.XIN, text: "沒有人相信，也不願相信，這盛世早就過去了……大樹隨時都會倒塌，壓死在樹下乘涼的螻蟻！"},
+                    { char: CHARS.XIN, text: "看來你還是不能很瞭解我呢" },
+                    { char: CHARS.XIN, text: "唉，知己難求啊！" },
+                    { char: CHARS.NARRATOR, text: "辛棄疾看了你一眼后，便轉身走入了人群中，不見蹤影……" }
+                ],
+                next: 'scene_wakeup_BAD#1'
+            },
+
+            // 小遊戲成功 -> 繼續劇情
+            'scene_ye_cont': {
+                script: [
+                    { char: CHARS.NARRATOR, text: "（你從褲袋裏拿出手機拍攝下了這些所謂的繁華）" },
+                    { char: CHARS.NARRATOR, text: "（辛棄疾看著你的操作不禁好奇和驚訝，問你借來手機端詳）" },
+                    { char: CHARS.XIN, text: "這樣的小巧玲瓏之物居然有如此多的功能！" },
+                    { char: CHARS.XIN, text: "我大宋居然已經淪落到了連西域也不如了嗎……" },
+                    { char: CHARS.NARRATOR, text: "（辛棄疾把手機歸還后，看著夜市裏的衆人，嘆了口氣）" },
+                    { char: CHARS.XIN, text: "不錯，就是這些寶馬、雕車、魚龍燈飾。" },
+                    { char: CHARS.XIN, text: "歌舞升平，都是假象，一棵腐朽的參天大樹罷了。" },
+                    { char: CHARS.XIN, text: "大樹日漸萎縮，越來越快。" },
+                    { char: CHARS.XIN, text: "沒有人相信，也不願相信，這盛世早就過去了……大樹隨時都會倒塌，壓死在樹下乘涼的螻蟻！" },
                     { char: CHARS.NARRATOR, text: "忽然，一陣俗不可耐的香氣撲面而來，一輛雕花的馬車停在我們面前，擋住了去路。" },
                     { char: CHARS.NARRATOR, text: "車簾掀開，露出一張塗著厚厚脂粉、頭插金絲鳳釵的嬌容。" },
                     { char: CHARS.NARRATOR, text: "那是一位身著綾羅的貴婦。" },
@@ -518,8 +830,7 @@
                     { char: CHARS.LADY, text: "今夜元夕，滿城都在尋歡作樂，怎的還有這般眉頭緊鎖、一臉晦氣的人？" },
                     { char: CHARS.LADY, text: "真是掃興。" },
                     { char: CHARS.NARRATOR, text: "侍女捧著一個精緻的壺走上前，輕蔑地看著我們。" },
-                    { char: CHARS.SERVER, text: "我家夫人心善，見不得人受苦。" },
-                    { char: CHARS.SERVER, text: "這可是屠蘇酒，喝一杯吧，喝了就能忘了那些煩心事，快活似神仙。" },
+                    { char: CHARS.LADY, text: "這可是屠蘇酒，喝一杯吧，喝了就能忘了那些煩心事，快活似神仙。" },
                     { char: CHARS.NARRATOR, text: "酒香鑽入鼻孔，那是頂級的佳釀，帶著一種誘人的麻醉感。" },
                     { char: CHARS.NARRATOR, text: "辛棄疾看著那杯酒，眼神冷得像凜冬冰雪。" },
                     { char: CHARS.NARRATOR, text: "他沒有動，挺直了脊樑，冷冷開口。" },
@@ -529,8 +840,8 @@
                     { char: CHARS.LADY, text: "這是太平盛世！" },
                     { char: CHARS.NARRATOR, text: "辛棄疾上前一步，逼視著車內的貴婦。" },
                     { char: CHARS.XIN, text: "太平？" },
-                    { char: CHARS.XIN, text: "夫人的暖風薰得太久了，怕是早已忘了靖康恥，猶未雪，臣子恨，何時滅！"},
-                    { char: CHARS.XIN, text: "忘了岳王爺的冤獄！"},
+                    { char: CHARS.XIN, text: "夫人的暖風薰得太久了，怕是早已忘了靖康恥，猶未雪，臣子恨，何時滅！" },
+                    { char: CHARS.XIN, text: "忘了岳王爺的冤獄！" },
                     { char: CHARS.XIN, text: "也忘了這臨安城外，還有無數同胞在金人的皮鞭下苟延殘喘！" },
                     { char: CHARS.NARRATOR, text: "貴婦尖叫著，狠狠甩下車簾。" },
                     { char: CHARS.LADY, text: "瘋子！" },
@@ -548,18 +859,13 @@
                     { char: CHARS.XIN, text: "因為總得有人記得。" },
                     { char: CHARS.XIN, text: "若連我也醉了，這大宋，就真的醒不了了。" },
                 ],
-                next: 'scene_dim_light'
+                next: 'scene_restaurant#1'
             },
-            'scene_lost_#1': {
-                bg: IMAGES.MARKET, 
-                script: [
-                    { char: CHARS.XIN, text: "看來你還是不能很瞭解我呢"},
-                    { char: CHARS.XIN, text: "唉，知己難求啊！"},
-                    { char: CHARS.NARRATOR, text: "辛棄疾看了你一眼后，便轉身走入了人群中，不見蹤影……"}
-                ],
-                next: 'scene_wakeup_BAD#1'
-            },
-            'scene_dim_light': {
+
+            // ============================================================
+            //  第四章：舊友重逢 (葉知秋)
+            // ============================================================
+            'scene_restaurant#1': {
                 bg: IMAGES.RESTAURANT,
                 script: [
                     { char: CHARS.NARRATOR, text: "穿過最喧鬧的街，我們來到了一處酒樓之下。" },
@@ -595,12 +901,37 @@
                     { char: CHARS.XIN, text: "所以你就放棄了？" },
                     { char: CHARS.NARRATOR, text: "葉知秋歇斯底里地吼道，指著周圍流光溢彩的街道。" },
                     { char: CHARS.YE, text: "我不放棄又能如何？" },
-                    { char: CHARS.YE, text: "你看看這滿街的燈火，你看看這笑得合不攏嘴的百姓！" },
                     { char: CHARS.YE, text: "誰想打仗？" },
                     { char: CHARS.YE, text: "誰想死？" },
                     { char: CHARS.YE, text: "只有你，辛棄疾，只有你還抱著那把破劍要做什麽攘除奸凶，還於舊都！" },
-                    { char: CHARS.YE, text: "我累了，我想過舒坦日子，有錯嗎？！" },
+                    { char: CHARS.YE, text: "我累了，我想過舒坦日子，有錯嗎？" },
                     { char: CHARS.NARRATOR, text: "辛棄疾沈默了。" },
+                    { char: CHARS.YE, text: "這位小友，又是怎麽看的？" },
+                    { char: CHARS.NARRATOR, text: "想必也是就這樣及時行樂吧？" },
+                ],
+                choices: [
+                    {
+                        text: "辛大人説得對，確實太少人清醒了。",
+                        target: 'scene_restaurant#2',
+                        weights: {
+                            awakening: 5,
+                            favor: 5
+                        }
+                    },
+                    {
+                        text: "那可不是嗎？",
+                        target: 'scene_restaurant#3',
+                        weights: {
+                            awakening: -15,
+                            favor: -10
+                        }
+
+                    },
+                ]
+            },
+
+            'scene_reataurant#2': {
+                script: [
                     { char: CHARS.NARRATOR, text: "他看著葉知秋那張扭曲的臉，眼中沒有丁點兒星火，仿佛死水般。" },
                     { char: CHARS.XIN, text: "你想過舒坦日子，沒錯。" },
                     { char: CHARS.NARRATOR, text: "辛棄疾緩緩說道，語氣平靜得讓人心碎。" },
@@ -617,17 +948,50 @@
                 ],
                 next: 'scene_temptation_start'
             },
+
+            'scene_restaurant#3': {
+                script: [
+                    { char: CHARS.NARRATOR, text: "辛棄疾挑一挑眉" },
+                    { char: CHARS.XIN, text: "閣下是認真的嗎？" },
+                    { char: CHARS.YE, text: "稼軒，我都説了，到了臨安，那可必須喝上一杯！" },
+                    { char: CHARS.YE, text: "來，接著奏樂接著舞啊！" },
+                    { char: CHARS.NARRATOR, text: "辛棄疾面如死灰地看著你，手中攥緊拳頭。" },
+                    { char: CHARS.YE, text: "稼軒，你也別傻了！來快活兒吧！" },
+                    { char: CHARS.XIN, text: "閣下既然心志已決，在下不應打擾，你就偷著樂吧！" },
+                ],
+                choices: [
+                    {
+                        text: "（笑）那必須的。",
+                        target: 'scene_wakeup_BAD#3-1',
+                        weights: {
+                            awakening: -100,
+                            favor: -100
+                        }
+                    },
+                    {
+                        text: "（嘆氣）我可沒有説過要留下享樂，就此墮落。",
+                        target: 'scene_temptation_start',
+                        weights: {
+                            awakening: +15,
+                            favor: +10
+                        }
+
+                    },
+                ]
+            },
+
+            // 拒絕誘惑小遊戲
             'scene_temptation_start': {
-                bg: IMAGES.RESTAURANT, // Or any background image
+                bg: IMAGES.RESTAURANT,
                 script: [
                     { char: CHARS.NARRATOR, text: "突然出現了不同的干擾！" },
                     { char: CHARS.XIN, text: "專心！" },
                     { char: CHARS.NARRATOR, text: "我必須突破重圍！" }
                 ],
-                // This triggers runMinigame('reject_temptation', 'scene_after_game') after the script ends
-                minigame: 'reject_temptation', 
-                next: 'scene_success' // The scene to load when the game is won
+                minigame: 'reject_temptation',
+                next: 'scene_success'
             },
+
             'scene_success': {
                 bg: IMAGES.RESTAURANT,
                 script: [
@@ -636,6 +1000,10 @@
                 ],
                 next: 'scene_see_women'
             },
+
+            // ============================================================
+            //  第五章：眾裡尋他 (高潮與結局判定)
+            // ============================================================
             'scene_see_women': {
                 bg: IMAGES.DARK,
                 script: [
@@ -653,6 +1021,23 @@
                     { char: CHARS.NARRATOR, text: "辛棄疾停下腳步，望著這條空蕩蕩的長街，聲音充滿了疲憊。" },
                     { char: CHARS.XIN, text: "這偌大的臨安城，百萬人，難道真的全都醉死了嗎？" },
                     { char: CHARS.XIN, text: "難道就沒有一個人，肯在繁華之外，不失其本心嗎？" },
+                ],
+                choices: [
+                    {
+                        text: "只有看得清這一切的人，才能被稱爲不失其本心。",
+                        target: 'scene_see_women_ext',
+                        weights: { awakening: 10, favor: 10 }
+                    },
+                    {
+                        text: "再找找吧，一定能找到的！",
+                        target: 'scene_see_women_ext',
+                    }
+                ],
+            },
+
+            'scene_see_women_ext': {
+                bg: IMAGES.DARK,
+                script: [
                     { char: CHARS.NARRATOR, text: "他的聲音在空曠的街道上迴盪，終歸寂靜。" },
                     { char: CHARS.NARRATOR, text: "忽然，一陣微風吹過，帶來了一縷幽香。" },
                     { char: CHARS.NARRATOR, text: "不是脂粉香，也不是酒肉香，而是一種淡淡的、冷冽的暗香。" },
@@ -686,8 +1071,20 @@
                     { char: CHARS.ME, text: "先生！" },
                     { char: CHARS.ME, text: "請等等…呃啊…" },
                 ],
-                next: 'scene_wakeup' 
+                next: function(s) {
+                    if (s.weights.awakening >= 35 && s.weights.favor >= 5) {
+                        return 'scene_wakeup_true';
+                    } else {
+                        return 'scene_wakeup';
+                    }
+                }
             },
+
+            // ============================================================
+            //  第六章：結局
+            // ============================================================
+            
+            // 【GOOD END】 普通好結局
             'scene_wakeup': {
                 bg: IMAGES.CLASSROOM,
                 script: [
@@ -704,8 +1101,61 @@
                     { char: CHARS.NARRATOR, text: "窗外陽光正好，而我，好像剛從一場關於風骨與堅守的大夢中醒來。" },
                     { char: CHARS.NARRATOR, text: "GOOD END：衆裏尋他千百度" },
                 ],
-                next: 'title'
+                next: 'cast'
             },
+
+            // 【TRUE END】 真結局 (需要權重)
+            'scene_wakeup_true': {
+                bg: IMAGES.CLASSROOM,
+                script: [
+                    { char: CHARS.ME, text: "哎喲……" },
+                    { char: CHARS.ME, text: "回來了……嗎？" },
+                    { char: CHARS.NARRATOR, text: "（你突然發現好像現在還是中文課，感受到危險的目光在注視著你）" },
+                    { char: CHARS.TEACHER, text: "…喂，一心，站起來！" },
+                    { char: CHARS.TEACHER, text: "青玉案，背出來！" },
+                    { char: CHARS.ME, text: "呃呃……東風夜放花千樹，更吹落，星如雨。" },
+                    { char: CHARS.ME, text: "寶馬雕車香滿路，鳳簫聲動，玉壺光轉，一夜魚龍舞。" },
+                    { char: CHARS.ME, text: "蛾兒雪柳黃金縷，笑語盈盈暗香去。" },
+                    { char: CHARS.ME, text: "眾裡尋他千百度，驀然回首，那人卻在，燈火闌珊處！" },
+                    { char: CHARS.NARRATOR, text: "是熟悉的教室白板，和同學們略帶詫異的目光。" },
+                    { char: CHARS.TEACHER, text: "嗯，很有感情。" },
+                    { char: CHARS.TEACHER, text: "但是最後一句錯了。檢討一下，這次放過你了。" },
+                    { char: CHARS.TEACHER, text: "下次別再上課睡覺了。" },
+                    { char: CHARS.NARRATOR, text: "我怔怔地坐回座位上，心臟仍在為剛才的奇遇劇烈跳動。" },
+                    { char: CHARS.NARRATOR, text: "指尖仿佛還殘留著那夜臨安街頭的微涼，耳畔似乎依舊迴響著稼軒先生那金石落地般的聲音。" },
+                    { char: CHARS.NARRATOR, text: "你突然想起了什麽，低頭翻書，書頁上《青玉案·元夕》的詞句驟然已經發生了變化。" },
+                    { char: CHARS.NARRATOR, text: "眾裡尋他千百度，驀然尋見，那人卻是，獨醒異鄉客……" },
+                    { char: CHARS.NARRATOR, text: "（你在南宋淳熙二年與辛棄疾的經歷成功感動了這位詩人！）" },
+                    { char: CHARS.NARRATOR, text: "（《青玉案 · 元夕》的解釋和辛棄疾的記錄也發生了變化，説是辛棄疾尋得的那人，是個身穿奇裝異服的西域人）" },
+                    { char: CHARS.NARRATOR, text: "（正是這個怪人，讓辛棄疾在那年元宵夜找回了當初的感動，重拾信心）" },
+                    { char: CHARS.NARRATOR, text: "（只是，大家都不知道，這曾是一場學渣與詩人的離奇邂逅）" },
+                    { char: CHARS.NARRATOR, text: "（而這名曾經的學渣也將奮發圖强，要讓辛棄疾看見自己的努力：不沉淪於繁華，力求上進！）" },
+                    { char: CHARS.NARRATOR, text: "GOOD END：我即那人 （真結局）" },
+                ],
+                next: 'cast'
+            },
+
+            // 【BAD END #1】 甘於沉淪 (早期分支失敗)
+            'scene_wakeup_BAD#1': {
+                bg: IMAGES.CLASSROOM,
+                script: [
+                    { char: CHARS.TEACHER, text: "…喂，一心，站起來！" },
+                    { char: CHARS.NARRATOR, text: "（……我回到了教室裏了嗎，這是……？）" },
+                    { char: CHARS.ME, text: "呃呃……東風夜放花千樹，更吹落、星如雨……" },
+                    { char: CHARS.ME, text: "寶馬……寶馬……" },
+                    { char: CHARS.TEACHER, text: "只背得出第一句嗎？給我站著！" },
+                    { char: CHARS.TEACHER, text: "下次不准再上課睡覺！" },
+                    { char: CHARS.NARRATOR, text: "我呆呆地站著，同學們的竊笑聲四起，心臟仍在為剛才的奇遇劇烈跳動。" },
+                    { char: CHARS.NARRATOR, text: "（看來我太短視了，這麽淺顯的道理都看不清……）" },
+                    { char: CHARS.NARRATOR, text: "我看著黑板，寫著的詞句仿佛在教訓我般。" },
+                    { char: CHARS.NARRATOR, text: "東風夜放花千樹，更吹落、星如雨。" },
+                    { char: CHARS.NARRATOR, text: "那偉岸的身影，和言辭裏透露出的的失望，已深深烙進我的腦海。" },
+                    { char: CHARS.NARRATOR, text: "BAD END #1：甘於沉淪" },
+                ],
+                next: 'cast'
+            },
+
+            // 【BAD END #2】 迷失繁華 (備用結局/小遊戲徹底失敗)
             'scene_wakeup_BAD#2': {
                 bg: IMAGES.CLASSROOM,
                 script: [
@@ -713,7 +1163,7 @@
                     { char: CHARS.NARRATOR, text: "（……我回到了教室裏了嗎，這是……？）" },
                     { char: CHARS.ME, text: "呃呃……" },
                     { char: CHARS.ME, text: "呃呃……寶馬雕車香滿路……" },
-                    { char: CHARS.ME, text: "鳳簫……魚龍……"},
+                    { char: CHARS.ME, text: "鳳簫……魚龍……" },
                     { char: CHARS.TEACHER, text: "上闕也背不出來嗎？去後面罰站！" },
                     { char: CHARS.TEACHER, text: "下次不准再上課睡覺！" },
                     { char: CHARS.NARRATOR, text: "我呆呆地站在課室後面，心臟仍在為剛才的奇遇劇烈跳動。" },
@@ -721,33 +1171,79 @@
                     { char: CHARS.NARRATOR, text: "我看著黑板，寫著的詞句仿佛在教訓我般。" },
                     { char: CHARS.NARRATOR, text: "寶馬雕車香滿路。鳳簫聲動，玉壺光轉，一夜魚龍舞。" },
                     { char: CHARS.NARRATOR, text: "那偉岸的身影，和言辭裏透露出的的失望，已深深烙進我的腦海。" },
-                    { char: CHARS.NARRATOR, text: "BAD END 2：迷失繁華" },
+                    { char: CHARS.NARRATOR, text: "BAD END #2：迷失繁華" },
                 ],
-                next: 'title'
+                next: 'cast'
             },
-            'scene_wakeup_BAD#1': {
+
+            // 【BAD END #3】 墮落於觥籌交錯 （接受葉知秋的邀請墮落）
+            'scene_wakeup_BAD#3-1': {
+                script: [
+                    { char: CHARS.XIN, text: "我真的是看錯你了！" },
+                    { char: CHARS.XIN, text: "唉……" },
+                    { char: CHARS.NARRATOR, text: "他憤然離場，臨走前向我投來了失望的眼神。" },
+                    { char: CHARS.YE, text: "小友，今夜我們不醉無歸！"},
+                    { char: CHARS.NARRATOR, text: "（看著手裏滿溢的美酒，你突然感到頭腦一陣模糊）" },
+                    { char: CHARS.NARRATOR, text: "（在倒下前，你依稀看見了碎掉的酒杯和灑出的酒液）" },
+                    { char: CHARS.NARRATOR, text: "（而衆人依然在狂歡之中，絲毫沒有察覺到你的悄然消失）" },
+                ],
+                next: 'scene_wakeup_BAD#3-2'
+            }, 
+
+            'scene_wakeup_BAD#3-2': {
                 bg: IMAGES.CLASSROOM,
                 script: [
                     { char: CHARS.TEACHER, text: "…喂，一心，站起來！" },
                     { char: CHARS.NARRATOR, text: "（……我回到了教室裏了嗎，這是……？）" },
-                    { char: CHARS.ME, text: "呃呃……東風夜放花千樹，更吹落、星如雨……" },
-                    { char: CHARS.ME, text: "寶馬……寶馬……"},
-                    { char: CHARS.TEACHER, text: "只背得出第一句嗎？給我站著！" },
-                    { char: CHARS.TEACHER, text: "下次不准再上課睡覺！" },
-                    { char: CHARS.NARRATOR, text: "我呆呆地站著，同學們的竊笑聲四起，心臟仍在為剛才的奇遇劇烈跳動。" },
-                    { char: CHARS.NARRATOR, text: "（看來我太短時了，這麽淺顯的道理都看不清……）" },
+                    { char: CHARS.ME, text: "呃呃……" },
+                    { char: CHARS.NARRATOR, text: "（你發現你倒在了地上）" },
+                    { char: CHARS.TEACHER, text: "站起來，還想躺在地上多久？" },
+                    { char: CHARS.TEACHER, text: "到後面去！" },
+                    { char: CHARS.NARRATOR, text: "我呆呆地站在課室後面，心臟仍在為剛才的奇遇劇烈跳動。" },
+                    { char: CHARS.NARRATOR, text: "（看來我還是需要長進呢，這都找不到……）" },
                     { char: CHARS.NARRATOR, text: "我看著黑板，寫著的詞句仿佛在教訓我般。" },
-                    { char: CHARS.NARRATOR, text: "東風夜放花千樹，更吹落、星如雨。"},
                     { char: CHARS.NARRATOR, text: "那偉岸的身影，和言辭裏透露出的的失望，已深深烙進我的腦海。" },
-                    { char: CHARS.NARRATOR, text: "BAD END 1：甘於沉淪" },
+                    { char: CHARS.NARRATOR, text: "BAD END #3：墮落於觥籌交錯" },
+                ],
+                next: 'cast'
+            },
+
+
+            'cast': {
+                script: [
+                    { char: CHARS.NARRATOR, text: "游戲製作：5D 鍾皓朗 編製劇本、流程、插畫" },
+                    { char: CHARS.NARRATOR, text: "特此鳴謝：5D 胡諾衕 提供綫稿和設計" },
+                    { char: CHARS.XIN, text: "感謝游玩 多謝支持！"}
                 ],
                 next: 'title'
             },
+
             'title': {
                 script: [],
                 next: null
             }
         };
+
+        // ==================== 核心函數定義 ====================
+
+        // 在遊戲開始前預加載立繪圖片
+        function preloadPortraits() {
+            const portraitUrls = [];
+            
+            Object.values(CHARS).forEach(char => {
+                if (char.portrait) {
+                    portraitUrls.push(char.portrait);
+                }
+            });
+            
+            portraitUrls.forEach(url => {
+                const img = new Image();
+                img.src = url;
+            });
+        }
+
+        // 在頁面加載完成後調用
+        window.addEventListener('DOMContentLoaded', preloadPortraits);
 
         function startGame(btn) {
             // 1. 按鈕瞬間發光 (高亮特效)
@@ -756,15 +1252,17 @@
             // 2. 取得轉場遮罩
             const mask = document.getElementById('transition-mask');
 
-            // 3. 延遲 300ms 讓玩家看清楚按鈕發光，然後開始變黑 (Fade Out to Black)
+            // 3. 延遲 300ms 讓玩家看清楚按鈕發光，然後開始變黑
             setTimeout(() => {
-                mask.classList.add('active'); // 觸發 CSS opacity: 1
+                mask.classList.add('active');
             }, 300);
 
             // 4. 等待畫面完全變黑 (1.5秒) 後，切換場景
             setTimeout(() => {
                 // 隱藏標題畫面
                 document.getElementById('title-screen').style.display = 'none';
+                clearPortraits();
+                resetCharacterTracking();
                 
                 // 執行原本的場景初始化邏輯
                 const bg1 = document.getElementById('scene-bg-1');
@@ -773,49 +1271,294 @@
                 
                 loadScene('start');
 
-                // 5. 場景載入後，再延遲一點點，讓遮罩淡出 (Fade In to Scene)
+                // 5. 場景載入後，再延遲一點點，讓遮罩淡出
                 setTimeout(() => {
-                    mask.classList.remove('active'); // 觸發 CSS opacity: 0
-                }, 800); 
+                    mask.classList.remove('active');
+                }, 800);
 
-            }, 1800); // 這裡的時間 = 300ms(按鈕延遲) + 1500ms(轉場時間)
+            }, 1800);
+        }
+
+        function updateCharacterPortrait(char, isSpeaking = true) {
+            const portraitsContainer = document.getElementById('character-portraits');
+            
+            // 如果是旁白，隱藏所有立繪
+            if (char === CHARS.NARRATOR || !char.portrait) {
+                hideAllPortraits();
+                return;
+            }
+            
+            // 確定顯示側
+            const side = char.side || "left";
+            const oppositeSide = side === "left" ? "right" : "left";
+            
+            // 獲取對應的插槽
+            const slot = portraitsContainer.querySelector(`.portrait-slot[data-side="${side}"]`);
+            
+            // 如果這個角色已經在顯示，只更新 speaking 狀態
+            if (activePortraits[side] === char.name) {
+                updateSpeakingState(side, isSpeaking);
+                return;
+            }
+            
+            // 否則，創建新的立繪
+            activePortraits[side] = char.name;
+            
+            // 清除該側的舊立繪
+            const oldPortrait = slot.querySelector('.character-illustration');
+            if (oldPortrait) {
+                oldPortrait.classList.remove('active', 'speaking');
+                oldPortrait.classList.add('fading');
+                setTimeout(() => oldPortrait.remove(), 500);
+            }
+            
+            // 對側立繪淡出效果
+            const oppositeSlot = portraitsContainer.querySelector(`.portrait-slot[data-side="${oppositeSide}"]`);
+            const oppositePortrait = oppositeSlot.querySelector('.character-illustration');
+            if (oppositePortrait && activePortraits[oppositeSide] !== char.name) {
+                oppositePortrait.classList.remove('speaking');
+                oppositePortrait.classList.add('fading');
+            }
+            
+            // 創建新的立繪元素
+            const portraitImg = document.createElement('img');
+            portraitImg.className = 'character-illustration';
+            portraitImg.alt = `${char.name} 立繪`;
+            portraitImg.dataset.character = char.name;
+            
+            // 圖片加載完成後顯示
+            portraitImg.onload = () => {
+                setTimeout(() => {
+                    portraitImg.classList.add('active');
+                    if (isSpeaking) {
+                        portraitImg.classList.add('speaking');
+                    }
+                }, 50);
+            };
+            
+            portraitImg.onerror = () => {
+                console.warn(`無法加載立繪: ${char.portrait}`);
+                portraitImg.remove();
+                activePortraits[side] = null;
+            };
+            
+            portraitImg.src = char.portrait;
+            slot.appendChild(portraitImg);
+        }
+
+        function updateSpeakingState(side, isSpeaking) {
+            const portraitsContainer = document.getElementById('character-portraits');
+            const slot = portraitsContainer.querySelector(`.portrait-slot[data-side="${side}"]`);
+            const portrait = slot.querySelector('.character-illustration');
+            
+            if (portrait) {
+                if (isSpeaking) {
+                    portrait.classList.add('speaking');
+                    portrait.classList.remove('fading');
+                } else {
+                    portrait.classList.remove('speaking');
+                    portrait.classList.add('fading');
+                }
+            }
+        }
+
+        function hideAllPortraits() {
+            const portraits = document.querySelectorAll('.character-illustration');
+            portraits.forEach(portrait => {
+                portrait.classList.remove('active', 'speaking');
+                portrait.classList.add('fading');
+            });
+            
+            activePortraits.left = null;
+            activePortraits.right = null;
+        }
+
+        function clearPortraits() {
+            const portraits = document.querySelectorAll('.character-illustration');
+            portraits.forEach(portrait => {
+                portrait.remove();
+            });
+            
+            activePortraits.left = null;
+            activePortraits.right = null;
+        }
+
+        // 分析場景，找出每個角色的最後出場位置
+        function analyzeSceneForLastAppearances(sceneId) {
+            const scene = SCENES[sceneId];
+            if (!scene || !scene.script) return;
+            
+            // 清空之前的記錄
+            characterLastAppearance = {};
+            
+            // 遍歷所有對話行，記錄每個角色的最後出現位置
+            scene.script.forEach((line, index) => {
+                if (line.char && line.char.name) {
+                    characterLastAppearance[line.char.name] = index;
+                }
+            });
+        }
+
+        // 重置角色追蹤
+        function resetCharacterTracking() {
+            characterLastAppearance = {};
+        }
+
+        // 檢查是否需要完全淡化某個角色
+        function checkForFinalFade(characterName, currentIndex) {
+            if (!characterName || !characterLastAppearance[characterName]) return false;
+            
+            // 如果當前索引等於或超過該角色的最後出場位置，則需要完全淡化
+            return currentIndex >= characterLastAppearance[characterName];
+        }
+
+        // 更新立繪顯示，處理完全淡化
+        function updateCharacterPortraitWithFade(char, currentIndex) {
+            const portraitsContainer = document.getElementById('character-portraits');
+            
+            // 如果是旁白，隱藏所有立繪
+            if (char === CHARS.NARRATOR || !char.portrait) {
+                hideAllPortraits();
+                return;
+            }
+            
+            // 檢查是否需要完全淡化
+            const shouldFadeCompletely = checkForFinalFade(char.name, currentIndex);
+            
+            // 確定顯示側
+            const side = char.side || "left";
+            const oppositeSide = side === "left" ? "right" : "left";
+            
+            // 獲取對應的插槽
+            const slot = portraitsContainer.querySelector(`.portrait-slot[data-side="${side}"]`);
+            
+            // 如果這個角色已經在顯示
+            if (activePortraits[side] === char.name) {
+                const portrait = slot.querySelector('.character-illustration');
+                if (portrait) {
+                    if (shouldFadeCompletely) {
+                        // 完全淡化（變為透明）
+                        portrait.style.opacity = '0';
+                        portrait.style.transition = 'opacity 1.2s ease';
+                        portrait.style.filter = 'brightness(0.5)';
+                        
+                        // 延遲後移除
+                        setTimeout(() => {
+                            if (portrait.parentNode) {
+                                portrait.remove();
+                                activePortraits[side] = null;
+                            }
+                        }, 1200);
+                    } else {
+                        // 正常高亮
+                        portrait.classList.add('speaking');
+                        portrait.classList.remove('fading');
+                    }
+                }
+                return;
+            }
+            
+            // 否則，創建新的立繪
+            activePortraits[side] = char.name;
+            
+            // 清除該側的舊立繪
+            const oldPortrait = slot.querySelector('.character-illustration');
+            if (oldPortrait) {
+                oldPortrait.classList.remove('active', 'speaking');
+                oldPortrait.classList.add('fading');
+                setTimeout(() => oldPortrait.remove(), 500);
+            }
+            
+            // 創建新的立繪元素
+            const portraitImg = document.createElement('img');
+            portraitImg.className = 'character-illustration';
+            portraitImg.alt = `${char.name} 立繪`;
+            portraitImg.dataset.character = char.name;
+            
+            // 如果應該完全淡化，設置初始透明度為0
+            if (shouldFadeCompletely) {
+                portraitImg.style.opacity = '0';
+                portraitImg.style.filter = 'brightness(0.5)';
+            }
+            
+            // 圖片加載完成後顯示
+            portraitImg.onload = () => {
+                setTimeout(() => {
+                    portraitImg.classList.add('active');
+                    
+                    if (shouldFadeCompletely) {
+                        // 如果是完全淡化，保持透明
+                        portraitImg.style.opacity = '0';
+                    } else {
+                        // 正常顯示
+                        portraitImg.classList.add('speaking');
+                    }
+                }, 50);
+            };
+            
+            portraitImg.onerror = () => {
+                console.warn(`無法加載立繪: ${char.portrait}`);
+                portraitImg.remove();
+                activePortraits[side] = null;
+            };
+            
+            portraitImg.src = char.portrait;
+            slot.appendChild(portraitImg);
+            
+            // 對側立繪淡出效果
+            const oppositeSlot = portraitsContainer.querySelector(`.portrait-slot[data-side="${oppositeSide}"]`);
+            const oppositePortrait = oppositeSlot.querySelector('.character-illustration');
+            if (oppositePortrait && activePortraits[oppositeSide] !== char.name) {
+                oppositePortrait.classList.remove('speaking');
+                oppositePortrait.classList.add('fading');
+            }
         }
 
         function loadScene(sceneId) {
-            // --- NEW: Handle Return to Title Screen ---
-            if (sceneId === 'title') {
-                // Show the title screen
-                document.getElementById('title-screen').style.display = 'flex';
+            try {
+                // --- NEW: Handle Return to Title Screen ---
+                if (sceneId === 'title') {
+                    // Show the title screen
+                    document.getElementById('title-screen').style.display = 'flex';
+                    
+                    // Hide game UI elements
+                    document.getElementById('dialogue-layer').style.display = 'none';
+                    document.getElementById('choices-container').style.display = 'none';
+                    document.getElementById('minigame-overlay').style.display = 'none';
+                    return; // Stop here, do not process further
+                }
+                // ------------------------------------------
+
+                state.scene = sceneId;
+                state.index = 0;
+                state.isTyping = false;
                 
-                // Hide game UI elements
-                document.getElementById('dialogue-layer').style.display = 'none';
-                document.getElementById('choices-container').style.display = 'none';
-                document.getElementById('minigame-overlay').style.display = 'none';
-                return; // Stop here, do not process further
-            }
-            // ------------------------------------------
+                const scene = SCENES[sceneId];
+                if (!scene) {
+                    console.error('場景不存在:', sceneId);
+                    return;
+                }
 
-            state.scene = sceneId;
-            state.index = 0;
-            state.isTyping = false;
-            
-            const scene = SCENES[sceneId];
-            if (!scene) return;
+                // 分析當前場景的角色出場情況
+                analyzeSceneForLastAppearances(sceneId);
 
-            // --- 探索遊戲 ---
-            if (scene.gameType === 'discover') {
-                document.getElementById('dialogue-layer').style.display = 'none';
-                document.getElementById('choices-container').style.display = 'none';
-                if (scene.config.bgImage) changeBg(scene.config.bgImage);
-                runDiscoverGame(scene.config);
-                return;
-            }
+                // --- 探索遊戲 ---
+                if (scene.gameType === 'discover') {
+                    document.getElementById('dialogue-layer').style.display = 'none';
+                    document.getElementById('choices-container').style.display = 'none';
+                    if (scene.config.bgImage) changeBg(scene.config.bgImage);
+                    runDiscoverGame(scene.config);
+                    return;
+                }
 
-            if (scene.bg) {
-                changeBg(scene.bg);
+                if (scene.bg) {
+                    changeBg(scene.bg);
+                }
+                
+                renderDialogue();
+            } catch (error) {
+                console.error('加載場景時發生錯誤:', error, 'sceneId:', sceneId);
             }
-            
-            renderDialogue();
         }
 
         function changeBg(url) {
@@ -834,37 +1577,53 @@
         }
 
         function renderDialogue() {
-            const scene = SCENES[state.scene];
-            const layer = document.getElementById('dialogue-layer');
-            const choices = document.getElementById('choices-container');
-            
-            choices.style.display = 'none';
-            layer.style.display = 'flex';
+            try {
+                const scene = SCENES[state.scene];
+                const layer = document.getElementById('dialogue-layer');
+                const choices = document.getElementById('choices-container');
+                
+                choices.style.display = 'none';
+                layer.style.display = 'flex';
 
-            if (state.index >= scene.script.length) {
-                if (scene.minigame) {
-                    layer.style.display = 'none';
-                    runMinigame(scene.minigame, scene.next);
-                } else if (scene.choices) {
-                    renderChoices(scene.choices);
-                } else if (scene.next) {
-                    loadScene(scene.next);
+                if (state.index >= scene.script.length) {
+                    if (scene.minigame) {
+                        layer.style.display = 'none';
+                        runMinigame(scene.minigame, scene.next);
+                    } else if (scene.choices) {
+                        renderChoices(scene.choices);
+                    } else if (scene.next) {
+                        // [核心修改]：支援動態分支
+                        let nextTarget = scene.next;
+                        
+                        // 如果 next 是一個函數，傳入 state 進行判斷
+                        if (typeof nextTarget === 'function') {
+                            nextTarget = nextTarget(state);
+                        }
+                        
+                        loadScene(nextTarget);
+                    }
+                    return;
                 }
-                return;
+
+                const line = scene.script[state.index];
+                const nameBox = document.getElementById('character-name-box');
+                const nameEl = document.getElementById('character-name');
+
+                if (line.char === CHARS.NARRATOR) {
+                    nameBox.style.visibility = 'hidden';
+                    hideAllPortraits(); // 旁白時隱藏立繪
+                } else {
+                    nameBox.style.visibility = 'visible';
+                    nameEl.innerHTML = `<span style="color:${line.char.color}">${line.char.name}</span>   <span class="char-tag">${line.char.tag}</span>`;
+                    
+                    // 更新立繪：使用新的帶有淡出檢測的函數
+                    updateCharacterPortraitWithFade(line.char, state.index);
+                }
+
+                typeWriter(line.text);
+            } catch (error) {
+                console.error('渲染對話時發生錯誤:', error);
             }
-
-            const line = scene.script[state.index];
-            const nameBox = document.getElementById('character-name-box');
-            const nameEl = document.getElementById('character-name');
-
-            if (line.char === CHARS.NARRATOR) {
-                nameBox.style.visibility = 'hidden';
-            } else {
-                nameBox.style.visibility = 'visible';
-                nameEl.innerHTML = `<span style="color:${line.char.color}">${line.char.name}</span>   <span class="char-tag">${line.char.tag}</span>`;
-            }
-
-            typeWriter(line.text);
         }
 
         function typeWriter(text) {
@@ -876,7 +1635,7 @@
             indicator.style.display = 'none';
             
             let i = 0;
-            const speed = 25; 
+            const speed = 25;
 
             function type() {
                 if (!state.isTyping) {
@@ -926,24 +1685,49 @@
             }
         }
 
-        function renderChoices(choicesData) {
-            const layer = document.getElementById('dialogue-layer');
+        function renderChoices(choices) {
             const container = document.getElementById('choices-container');
-            
-            layer.style.display = 'none';
-            container.style.display = 'flex';
             container.innerHTML = '';
+            container.style.display = 'flex';
 
-            choicesData.forEach(c => {
+            hideAllPortraits();
+
+            choices.forEach(choice => {
                 const btn = document.createElement('button');
                 btn.className = 'choice-btn';
-                btn.innerText = c.text;
-                btn.onclick = () => {
-                    loadScene(c.target);
+                btn.textContent = choice.text;
+                
+                // 設置點擊事件
+                btn.onclick = (e) => {
+                    e.stopPropagation(); // 防止觸發背景點擊
+
+                    // 1. 處理權重變化
+                    if (choice.weights) {
+                        for (let key in choice.weights) {
+                            if (state.weights.hasOwnProperty(key)) {
+                                state.weights[key] += choice.weights[key];
+                                // 測試用：在控制台顯示變化，發布時可註解掉
+                                console.log(`權重更新 [${key}]: ${state.weights[key]}`);
+                            }
+                        }
+                    }
+
+                    // 2. 處理畫面跳轉 (支援條件判斷)
+                    container.style.display = 'none';
+                    
+                    let nextTarget = choice.target;
+                    
+                    // 如果 target 是一個函數 (用於判斷結局)，則執行它獲取結果
+                    if (typeof nextTarget === 'function') {
+                        nextTarget = nextTarget(state);
+                    }
+                    
+                    loadScene(nextTarget);
                 };
                 container.appendChild(btn);
             });
         }
+
 
         // --- 小遊戲 1: 拒絕誘惑 ---
         function runMinigame(type, nextScene) {
@@ -951,173 +1735,322 @@
             overlay.innerHTML = '';
             overlay.style.display = 'flex';
 
+            hideAllPortraits();
+            
             if (type === 'reject_temptation') {
                 overlay.innerHTML = `
                     <div style="position: absolute; top: 20px; width: 100%; text-align: center; z-index: 30; pointer-events: none;">
                         <h2 style="font-size: 1.5rem; color: #ffca28; text-shadow: 0 2px 4px rgba(0,0,0,0.8);">【心志試煉】眾裡尋他</h2>
-                        <p style="font-size: 0.9rem; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">點擊<span style="color:#aaa;">暗淡字詞</span>，勿碰<span style="color:#ff5722;">鮮豔誘惑</span></p>
-                        <div id="game-status" style="margin-top:5px; font-weight:bold; color: #fff;">進度: 0/5</div>
+                        <p style="font-size: 0.9rem; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">
+                            點擊<span style="color:#4caf50; font-weight:bold;">綠色邊框的正確詞語</span>，避免<span style="color:#ff5722; font-weight:bold;">紅色邊框的誘惑詞語</span>
+                        </p>
+                        <br>
+                        <div id="game-status" style="margin-top:5px; font-weight:bold; color: #fff; font-size: 1.2rem;">進度: 0/5</div>
+                        <div id="game-timer" style="margin-top:5px; color: #ffca28; font-size: 1rem;">時間: 60秒</div>
                     </div>
-                    <div class="game-area" id="temptation-area" style="position: absolute; inset: 0; overflow: hidden;"></div>
+                    <div id="temptation-area" style="
+                        position: relative;
+                        width: 90%;
+                        height: 70%;
+                        max-width: 800px;
+                        max-height: 600px;
+                        background: rgba(20, 20, 30, 0.7);
+                        border: 2px solid rgba(255, 179, 0, 0.3);
+                        border-radius: 10px;
+                        overflow: hidden;
+                        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+                    "></div>
                 `;
 
                 let progress = 0;
+                let timeLeft = 60;
                 let active = true;
                 const area = document.getElementById('temptation-area');
                 const status = document.getElementById('game-status');
+                const timerEl = document.getElementById('game-timer');
 
-                const correctWords = ["清醒", "故土", "北伐", "忠義", "山河"];
-                const wrongWords = ["富貴", "享樂", "黃金", "美酒", "功名", "寶馬", "花燈", "沉淪", "忘卻", "溫柔鄉"];
+                const correctWords = ["清醒", "故土", "北伐", "忠義", "山河", "風骨", "堅守", "本心", "責任", "理想"];
+                const wrongWords = ["富貴", "享樂", "黃金", "美酒", "功名", "寶馬", "花燈", "沉淪", "忘卻", "溫柔鄉", "安逸", "妥協", "逃避"];
+
+                // 計時器
+                const timerInterval = setInterval(() => {
+                    if (!active) return;
+                    timeLeft--;
+                    timerEl.textContent = `時間: ${timeLeft}秒`;
+                    
+                    if (timeLeft <= 10) {
+                        timerEl.style.color = "#ff5252";
+                        timerEl.style.animation = "pulse 0.5s infinite";
+                    }
+                    
+                    if (timeLeft <= 0) {
+                        endGame(false, "時間到！");
+                    }
+                }, 1000);
 
                 function spawnWord() {
                     if (!active) return;
                     
-                    const isTarget = Math.random() > 0.7; // 40% 機率是目標
-                    const word = isTarget ? correctWords[Math.floor(Math.random() * correctWords.length)] : wrongWords[Math.floor(Math.random() * wrongWords.length)];
+                    const isTarget = Math.random() > 0.7; // 30% 機率是目標
+                    const word = isTarget ? 
+                        correctWords[Math.floor(Math.random() * correctWords.length)] : 
+                        wrongWords[Math.floor(Math.random() * wrongWords.length)];
 
                     const el = document.createElement('div');
                     el.textContent = word;
                     el.className = 'distraction-item';
                     
-                    // --- 核心修改：樣式設定 ---
-                    // 強制設定為 absolute 並歸零，我們完全依靠 transform 移動
+                    // 基礎樣式設定
                     el.style.cssText = `
                         position: absolute;
-                        left: 0;
-                        top: 0;
                         white-space: nowrap;
-                        font-size: ${1.2 + Math.random() * 0.8}rem; /* 隨機大小 */
+                        font-size: ${1.5 + Math.random() * 0.5}rem;
                         cursor: pointer;
                         user-select: none;
                         z-index: 10;
-                        opacity: 0.9;
-                        will-change: transform; /* 效能優化 */
+                        opacity: 0.95;
+                        padding: 8px 15px;
+                        border-radius: 20px;
+                        font-family: 'Noto Serif TC', serif;
+                        transition: all 0.2s ease;
+                        will-change: transform;
+                        backdrop-filter: blur(2px);
                     `;
 
-                    // --- 顏色與點擊邏輯 ---
+                    // 根據詞語類型設定樣式
                     if (isTarget) {
-                        el.style.color = '#aaa'; // 暗淡顏色
+                        // 正確詞語 - 綠色邊框
+                        el.style.color = '#e8f5e9';
+                        el.style.backgroundColor = 'rgba(76, 175, 80, 0.2)';
+                        el.style.border = '2px solid #4caf50';
+                        el.style.boxShadow = '0 0 10px rgba(76, 175, 80, 0.3)';
+                        
                         el.onclick = (e) => {
-                            // 點擊正確：增加進度並消失
-                            e.stopPropagation(); // 防止點穿
+                            if (!active) return;
+                            e.stopPropagation();
                             progress++;
-                            status.innerText = `進度: ${progress}/5`;
+                            status.textContent = `進度: ${progress}/5`;
+                            status.style.color = "#4caf50";
                             
-                            // 點擊特效 (可選)
-                            el.style.transform = 'scale(1.5)';
+                            // 點擊效果
+                            el.style.transform = 'scale(1.3)';
                             el.style.opacity = '0';
-                            el.style.transition = 'all 0.2s';
-                            setTimeout(() => el.remove(), 200);
+                            el.style.borderColor = '#8bc34a';
+                            el.style.boxShadow = '0 0 20px #8bc34a';
+                            el.style.transition = 'all 0.3s';
+                            
+                            // 顯示反饋
+                            showFeedback("", "#4caf50");
+                            
+                            setTimeout(() => el.remove(), 300);
 
                             if (progress >= 5) {
-                                endGame(true);
+                                endGame(true, "恭喜！心志堅定！");
                             }
                         };
                     } else {
-                        el.style.color = '#ff5722'; // 鮮豔顏色
+                        // 錯誤詞語 - 紅色邊框
+                        el.style.color = '#ffebee';
+                        el.style.backgroundColor = 'rgba(244, 67, 54, 0.2)';
+                        el.style.border = '2px solid #f44336';
+                        el.style.boxShadow = '0 0 10px rgba(244, 67, 54, 0.3)';
                         el.style.fontWeight = 'bold';
-                        el.style.textShadow = '0 0 5px rgba(255, 87, 34, 0.5)';
+                        
                         el.onclick = (e) => {
-                            // 點擊錯誤：懲罰
+                            if (!active) return;
                             e.stopPropagation();
-                            status.innerText = "心志動搖！重來！";
-                            status.style.color = "#ff5252";
-                            progress = 0;
-                            // 畫面閃紅警告
-                            area.style.backgroundColor = 'rgba(255,0,0,0.2)';
-                            setTimeout(() => { 
-                                area.style.backgroundColor = 'transparent'; 
-                                status.style.color = "#fff";
-                                status.innerText = `進度: ${progress}/5`;
-                            }, 300);
+                            
+                            // 錯誤懲罰
+                            if (progress > 0) progress--;
+                            status.textContent = `進度: ${progress}/5`;
+                            status.style.color = "#f44336";
+                            
+                            // 錯誤效果
+                            el.style.transform = 'scale(1.1)';
+                            el.style.borderColor = '#ff5252';
+                            el.style.boxShadow = '0 0 20px #ff5252';
+                            el.style.backgroundColor = 'rgba(244, 67, 54, 0.4)';
+                            
+                            // 顯示反饋
+                            showFeedback("✗ 心志動搖！", "#f44336");
+                            
+                            // 遊戲區域震動效果
+                            area.style.transform = 'translateX(5px)';
+                            setTimeout(() => area.style.transform = 'translateX(-5px)', 50);
+                            setTimeout(() => area.style.transform = 'translateX(0)', 100);
+                            
+                            // 紅色閃光效果
+                            area.style.backgroundColor = 'rgba(244, 67, 54, 0.1)';
+                            setTimeout(() => area.style.backgroundColor = 'rgba(20, 20, 30, 0.7)', 200);
+                            
+                            setTimeout(() => el.remove(), 500);
                         };
                     }
 
                     area.appendChild(el);
 
-                    // --- 核心修改：計算隨機邊緣座標 ---
-                    const w = window.innerWidth;
-                    const h = window.innerHeight;
-                    const buffer = 100; // 讓字體生成在畫面外一點點
+                    // 計算隨機起始位置（從邊緣進入）
+                    const w = area.clientWidth;
+                    const h = area.clientHeight;
+                    const buffer = 50;
 
                     let startX, startY, endX, endY;
-                    const edge = Math.floor(Math.random() * 4); // 0:上, 1:右, 2:下, 3:左
+                    const edge = Math.floor(Math.random() * 4);
 
                     switch(edge) {
-                        case 0: // 上邊緣生成 -> 往下面隨機位置飛
-                            startX = Math.random() * w;
+                        case 0: // 上邊進入
+                            startX = Math.random() * (w - 100) + 50;
                             startY = -buffer;
-                            endX = Math.random() * w; // 終點 X 隨機，造成斜線效果
+                            endX = Math.random() * (w - 100) + 50;
                             endY = h + buffer;
                             break;
-                        case 1: // 右邊緣生成 -> 往左面隨機位置飛
+                        case 1: // 右邊進入
                             startX = w + buffer;
-                            startY = Math.random() * h;
+                            startY = Math.random() * (h - 100) + 50;
                             endX = -buffer;
-                            endY = Math.random() * h;
+                            endY = Math.random() * (h - 100) + 50;
                             break;
-                        case 2: // 下邊緣生成 -> 往上面隨機位置飛
-                            startX = Math.random() * w;
+                        case 2: // 下邊進入
+                            startX = Math.random() * (w - 100) + 50;
                             startY = h + buffer;
-                            endX = Math.random() * w;
+                            endX = Math.random() * (w - 100) + 50;
                             endY = -buffer;
                             break;
-                        case 3: // 左邊緣生成 -> 往右面隨機位置飛
+                        case 3: // 左邊進入
                             startX = -buffer;
-                            startY = Math.random() * h;
+                            startY = Math.random() * (h - 100) + 50;
                             endX = w + buffer;
-                            endY = Math.random() * h;
+                            endY = Math.random() * (h - 100) + 50;
                             break;
                     }
 
-                    // --- 核心修改：Web Animations API 執行動畫 ---
-                    // 隨機旋轉角度 (-90度 到 90度 之間)
-                    const rotateStart = (Math.random() - 0.5) * 60; 
-                    const rotateEnd = rotateStart + (Math.random() - 0.5) * 180; // 在移動過程中額外旋轉
-                    
-                    // 隨機速度 (3秒 ~ 7秒)
-                    const duration = 5000 + Math.random() * 5000;
+                    // 設置初始位置
+                    el.style.left = `${startX}px`;
+                    el.style.top = `${startY}px`;
+
+                    // 動畫
+                    const rotateStart = (Math.random() - 0.5) * 60;
+                    const rotateEnd = rotateStart + (Math.random() - 0.5) * 180;
+                    const duration = 6000 + Math.random() * 4000;
 
                     const animation = el.animate([
-                        { transform: `translate(${startX}px, ${startY}px) rotate(${rotateStart}deg)` },
-                        { transform: `translate(${endX}px, ${endY}px) rotate(${rotateEnd}deg)` }
+                        { 
+                            transform: `translate(0, 0) rotate(${rotateStart}deg)`,
+                            opacity: 0.8 
+                        },
+                        { 
+                            transform: `translate(${endX - startX}px, ${endY - startY}px) rotate(${rotateEnd}deg)`,
+                            opacity: 0.8 
+                        }
                     ], {
                         duration: duration,
-                        easing: 'linear', // 線性移動，保持勻速
+                        easing: 'linear',
                         fill: 'forwards'
                     });
 
-                    // 動畫結束後自動移除 DOM，節省記憶體
                     animation.onfinish = () => {
                         if (el.parentNode) el.remove();
                     };
 
-                    // 繼續生成下一個
+                    // 生成下一個詞語
                     if (active) {
-                        // 隨著進度增加，生成速度變快 (難度提升)
-                        const nextSpawnTime = 800 - (progress * 50); 
-                        setTimeout(spawnWord, Math.max(300, nextSpawnTime));
+                        const nextSpawnTime = 1000 - (progress * 100);
+                        setTimeout(spawnWord, Math.max(400, nextSpawnTime));
                     }
                 }
 
-                function endGame(win) {
-                    active = false;
-                    // 清除所有殘留的字詞
-                    const remaining = document.querySelectorAll('.distraction-item');
-                    remaining.forEach(item => {
-                        // 讓它們淡出
-                        item.style.transition = 'opacity 0.5s';
-                        item.style.opacity = '0';
-                        setTimeout(() => item.remove(), 500);
-                    });
-
-                    setTimeout(() => {
-                        overlay.style.display = 'none';
-                        loadScene(nextScene);
-                    }, 1000);
+                function showFeedback(text, color) {
+                    const feedback = document.createElement('div');
+                    feedback.textContent = text;
+                    feedback.style.cssText = `
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        color: ${color};
+                        font-size: 2rem;
+                        font-weight: bold;
+                        text-shadow: 0 0 10px rgba(0,0,0,0.8);
+                        z-index: 100;
+                        pointer-events: none;
+                        opacity: 0;
+                        animation: feedbackFade 1s ease-out;
+                    `;
+                    
+                    area.appendChild(feedback);
+                    setTimeout(() => feedback.remove(), 1000);
                 }
 
-                // 開始生成
+                function endGame(win, message) {
+                    active = false;
+                    clearInterval(timerInterval);
+                    
+                    const remaining = document.querySelectorAll('.distraction-item');
+                    remaining.forEach(item => {
+                        item.style.transition = 'opacity 0.5s, transform 0.5s';
+                        item.style.opacity = '0';
+                        item.style.transform = 'scale(0.5)';
+                        setTimeout(() => {
+                            if (item.parentNode) item.remove();
+                        }, 500);
+                    });
+
+                    // 顯示結果
+                    const resultBox = document.createElement('div');
+                    resultBox.style.cssText = `
+                        position: absolute;
+                        inset: 0;
+                        background: rgba(0, 0, 0, 0.85);
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 50;
+                        animation: fadeIn 0.5s;
+                    `;
+                    
+                    const title = win ? "✓ 挑戰成功" : "✗ 挑戰失敗";
+                    const color = win ? "#4caf50" : "#f44336";
+                    const sub = message || (win ? "心志堅定，不為所動" : "未能抵擋誘惑");
+                    
+                    resultBox.innerHTML = `
+                        <h2 style="color:${color}; font-size:2.5rem; margin-bottom:20px; text-shadow: 0 0 10px ${color}80;">
+                            ${title}
+                        </h2>
+                        <p style="color:#fff; font-size:1.2rem; margin-bottom:30px;">${sub}</p>
+                        <p style="color:#ccc; font-size:1rem; margin-bottom:40px;">點擊繼續</p>
+                        <div style="color:#888; font-size:0.9rem; margin-top:20px;">
+                            最終進度: ${progress}/5 | 剩餘時間: ${timeLeft}秒
+                        </div>
+                    `;
+                    
+                    resultBox.onclick = () => {
+                        overlay.style.display = 'none';
+                        loadScene(nextScene);
+                    };
+                    
+                    area.appendChild(resultBox);
+                    
+                    // 添加淡入動畫到CSS
+                    if (!document.querySelector('#feedback-animation')) {
+                        const style = document.createElement('style');
+                        style.id = 'feedback-animation';
+                        style.textContent = `
+                            @keyframes feedbackFade {
+                                0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+                                50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+                                100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+                            }
+                            @keyframes fadeIn {
+                                from { opacity: 0; }
+                                to { opacity: 1; }
+                            }
+                        `;
+                        document.head.appendChild(style);
+                    }
+                }
+
+                // 開始生成詞語
                 spawnWord();
             }
         }
@@ -1127,11 +2060,10 @@
             const overlay = document.getElementById('minigame-overlay');
             overlay.innerHTML = '';
             overlay.style.display = 'flex';
-            // Clear any inline styles that flex might override
-            overlay.style.background = 'rgba(0,0,0,1)'; 
+            overlay.style.background = 'rgba(0,0,0,1)';
 
             const targetHint = config.targetHint || "可疑之處";
-            const goalCount = config.limit; 
+            const goalCount = config.limit;
             const timeLimit = config.timeLimit || 30;
             
             let correctCount = 0;
@@ -1196,7 +2128,6 @@
                     width: ${pos.width};
                     height: ${pos.height};
                     cursor: pointer;
-                    /* border: 1px solid red; /* Debug: remove this in prod */
                     z-index: 5;
                 `;
                 
@@ -1220,11 +2151,8 @@
                         animation: discoverZoom 0.5s ease-out;
                     `;
                     block.appendChild(circle);
-
-                    if (correctCount >= goalCount) {
-                        endGame(true);
-                    }
                 };
+
                 container.appendChild(block);
             });
 
@@ -1233,8 +2161,28 @@
                 if (!isGameActive) return;
                 timeLeft--;
                 updateStatus();
+
                 if (timeLeft <= 0) {
-                    endGame(false);
+                    clearInterval(timerInterval);
+                    isGameActive = false;
+                    
+                    // --- 結算邏輯 ---
+                    if (correctCount >= goalCount) {
+                        const totalTargets = config.targets ? config.targets.length : 4;
+                        
+                        if (correctCount >= totalTargets) {
+                            if (!state.weights) state.weights = { awakening: 0, favor: 0 };
+                            
+                            state.weights.awakening = (state.weights.awakening || 0) + 10;
+                            state.weights.favor = (state.weights.favor || 0) + 10;
+                            
+                            console.log("觸發隱藏劇情！權重已更新:", state.weights);
+                        }
+
+                        endGame(true);
+                    } else {
+                        endGame(false);
+                    }
                 }
             }, 1000);
 
@@ -1252,9 +2200,9 @@
                         z-index: 20; animation: fadeIn 0.5s;
                     `;
                     
-                    const title = win ? "尋獲" : "失敗";
+                    const title = win ? "成功尋獲！" : "失敗";
                     const color = win ? "#ffb300" : "#ff5252";
-                    const sub = win ? "點擊繼續" : "點擊重試";
+                    const sub = win ? "點擊繼續" : "點擊繼續";
                     
                     resultBox.innerHTML = `
                         <h2 style="color:${color}; font-size:2.5rem; margin-bottom:10px;">${title}</h2>
@@ -1276,19 +2224,37 @@
 
             overlay.appendChild(container);
         }
-        
-    </script>
-    <!--
+
+        function showEnding(endingData) {
+            const overlay = document.getElementById('ending-overlay');
+            const typeEl = document.getElementById('end-type');
+            const titleEl = document.getElementById('end-title');
+            const banner = overlay.querySelector('.ending-banner');
+
+            // 設定文字
+            typeEl.textContent = endingData.type || "ENDING";
+            titleEl.textContent = endingData.title || "未命名結局";
+
+            banner.classList.remove('good');
+            if (endingData.type === 'GOOD END' || endingData.type === 'TRUE END') {
+                banner.classList.add('good');
+            }
+
+            overlay.style.display = 'flex';
+        }
+
+        // 確保所有必要的函數都暴露在全局作用域
+        window.startGame = startGame;
+        window.handleDialogueClick = handleDialogueClick;
+    /* 
     =======================================================
-        邦邦邦邦！我就是彩蛋！
-        恰髏！(∠·ω )⌒★
-        哇啊！是柚子厨！快逃口牙！
-        你太無聊了吧，真的相信有獎勵嗎？
-        怎麽可能啦！
+    邦邦邦邦！我就是彩蛋！
+    恰髏！(∠·ω )⌒★
+    哇啊！是柚子厨！快逃口牙！
+    你太無聊了吧，真的相信有獎勵嗎？
+    怎麽可能啦！
     =======================================================
-    ->
-    </body>
-<html>
+    </ script>
 
 
 
@@ -1390,11 +2356,14 @@
 
 
 
+
+    =======================================================
     還是讓你發現惹~
     獎勵就是這個心靈鷄湯：
     你都有這個恆心找到我了，做任何事一定會成功的~
     flag{I-w0nd3r-if-i7-1s-t00-obv10u5-t0-put-a-f14g-here-bu7-wh0-w0uld-f1nd-me3-so-lon3ly-emo-la-@w@}
     =======================================================
-    -->
+    */
+    </script>
 </body>
 </html>
