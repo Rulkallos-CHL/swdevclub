@@ -675,7 +675,73 @@
             }
         };
 
-        const SCENES = {
+        // ==================== 核心函數定義 ====================
+
+        // 在遊戲開始前預加載立繪圖片
+        function preloadPortraits() {
+            const portraitUrls = [];
+            Object.values(CHARS).forEach(char => {
+                if (char.portrait) {
+                    portraitUrls.push(char.portrait);
+                }
+            });
+            portraitUrls.forEach(url => {
+                const img = new Image();
+                img.src = url;
+            });
+        }
+        // 在頁面加載完成後調用
+        window.addEventListener('DOMContentLoaded', preloadPortraits);
+
+        function startGame(btn) {
+            // 1. 按鈕瞬間發光 (高亮特效)
+            if(btn) btn.classList.add('clicked');
+
+            // 2. 取得轉場遮罩
+            const mask = document.getElementById('transition-mask');
+
+            // 3. 延遲 300ms 讓玩家看清楚按鈕發光，然後開始變黑
+            setTimeout(() => {
+                mask.classList.add('active');
+            }, 300);
+
+            // 4. 等待畫面完全變黑 (1.5秒) 後，切換場景
+            setTimeout(() => {
+                // 隱藏標題畫面
+                document.getElementById('title-screen').style.display = 'none';
+                
+                clearPortraits();
+                resetCharacterTracking();
+
+                // 執行原本的場景初始化邏輯
+                const bg1 = document.getElementById('scene-bg-1');
+                bg1.style.backgroundImage = `url('${SCENES['start'].bg}')`;
+                bg1.classList.add('active');
+
+                document.getElementById('dialogue-layer').style.display = 'flex';
+                state.bgSlot = 1;
+                loadScene('start');
+
+                // 5. 場景加載好後，讓畫面變亮 (移除 active)
+                mask.classList.remove('active');
+
+            }, 1800);
+        }
+
+        // 狀態變數
+        let state = {
+            scene: 'start',
+            index: 0,
+            bgSlot: 1,
+            isTyping: false,
+            weights: {
+                awakening: 0, 
+                favor: 0 
+            },
+            isAuto: false // Keep consistent with global
+        };
+
+                const SCENES = {
             // ============================================================
             //  第一章：序幕 & 穿越
             // ============================================================
@@ -1171,13 +1237,7 @@
                     { char: CHARS.ME, text: "先生！" },
                     { char: CHARS.ME, text: "請等等…呃啊…" },
                 ],
-                next: function(s) {
-                    if (s.weights.awakening >= 35 && s.weights.favor >= 5) {
-                        return 'scene_wakeup_true';
-                    } else {
-                        return 'scene_wakeup';
-                    }
-                }
+                next: (state.weights.awakening >= 35 && state.weights.favor >= 5) ? 'scene_wakeup_true' : 'scene_wakeup'
             },
 
             // ============================================================
@@ -1322,72 +1382,6 @@
                 script: [],
                 next: null
             }
-        };
-
-        // ==================== 核心函數定義 ====================
-
-        // 在遊戲開始前預加載立繪圖片
-        function preloadPortraits() {
-            const portraitUrls = [];
-            Object.values(CHARS).forEach(char => {
-                if (char.portrait) {
-                    portraitUrls.push(char.portrait);
-                }
-            });
-            portraitUrls.forEach(url => {
-                const img = new Image();
-                img.src = url;
-            });
-        }
-        // 在頁面加載完成後調用
-        window.addEventListener('DOMContentLoaded', preloadPortraits);
-
-        function startGame(btn) {
-            // 1. 按鈕瞬間發光 (高亮特效)
-            if(btn) btn.classList.add('clicked');
-
-            // 2. 取得轉場遮罩
-            const mask = document.getElementById('transition-mask');
-
-            // 3. 延遲 300ms 讓玩家看清楚按鈕發光，然後開始變黑
-            setTimeout(() => {
-                mask.classList.add('active');
-            }, 300);
-
-            // 4. 等待畫面完全變黑 (1.5秒) 後，切換場景
-            setTimeout(() => {
-                // 隱藏標題畫面
-                document.getElementById('title-screen').style.display = 'none';
-                
-                clearPortraits();
-                resetCharacterTracking();
-
-                // 執行原本的場景初始化邏輯
-                const bg1 = document.getElementById('scene-bg-1');
-                bg1.style.backgroundImage = `url('${SCENES['start'].bg}')`;
-                bg1.classList.add('active');
-
-                document.getElementById('dialogue-layer').style.display = 'flex';
-                state.bgSlot = 1;
-                loadScene('start');
-
-                // 5. 場景加載好後，讓畫面變亮 (移除 active)
-                mask.classList.remove('active');
-
-            }, 1800);
-        }
-
-        // 狀態變數
-        let state = {
-            scene: 'start',
-            index: 0,
-            bgSlot: 1,
-            isTyping: false,
-            weights: {
-                awakening: 0, 
-                favor: 0 
-            },
-            isAuto: false // Keep consistent with global
         };
 
         // ==================== NEW FEATURE LOGIC ====================
@@ -2472,7 +2466,6 @@
     </script>
 </body>
 </html>
-
 
 
 
